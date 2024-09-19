@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -14,10 +15,19 @@
     "express": "^4.21.0"
   },
   "devDependencies": {
-    "typescript": "^5.6.2",
+    "@eslint/js": "^9.10.0",
+    "@types/eslint__js": "^8.42.3",
     "@types/express": "^4.17.21",
     "@types/node": "^22.5.5",
+    "eslint": "^9.10.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
     "nodemon": "^3.1.6",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.6.0"
+  },
+  "lint-staged": {
+    "*.ts": "eslint --fix ./src"
   }
 }
