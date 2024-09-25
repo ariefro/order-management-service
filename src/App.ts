@@ -1,12 +1,18 @@
 import express, { Application } from 'express';
-import database from './config/database';
 import logger from './config/logger';
 import http from 'http';
+import { PrismaClient } from '@prisma/client';
 
 export default class App {
-	public express: Application = express();
+	public express: Application;
+	public httpServer: http.Server;
+	private prisma: PrismaClient;
 
-	public httpServer: http.Server = http.createServer(this.express);
+	constructor() {
+		this.express = express();
+		this.httpServer = http.createServer(this.express);
+		this.prisma = new PrismaClient();
+	}
 
 	public async init(): Promise<void> {
 		await this.assertDatabaseConnection();
@@ -14,11 +20,14 @@ export default class App {
 
 	private async assertDatabaseConnection(): Promise<void> {
 		try {
-			await database.authenticate();
-			await database.sync();
-			logger.info('Connection has been established successfully');
+			await this.prisma.$connect();
+			logger.info('Connected to the database using Prisma successfully');
 		} catch (error) {
-			logger.error('Unable to connect to the database: ', error);
+			logger.error(
+				'Unable to connect to the database using Prisma: ',
+				error,
+			);
+			process.exit(1);
 		}
 	}
 }
