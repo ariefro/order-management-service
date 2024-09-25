@@ -1,5 +1,7 @@
+import cors from 'cors';
 import express, { Application } from 'express';
 import logger from './config/logger';
+import helmet from 'helmet';
 import http from 'http';
 import { PrismaClient } from '@prisma/client';
 
@@ -15,7 +17,21 @@ export default class App {
 	}
 
 	public async init(): Promise<void> {
+		this.middleware();
 		await this.assertDatabaseConnection();
+	}
+
+	private middleware(): void {
+		this.express.use(helmet({ contentSecurityPolicy: true }));
+		this.express.use(express.json({ limit: '100mb' }));
+		this.express.use(
+			express.urlencoded({ limit: '100mb', extended: true }),
+		);
+
+		const corsOptions = {
+			origin: process.env.ALLOWED_ORIGIN_URL,
+		};
+		this.express.use(cors(corsOptions));
 	}
 
 	private async assertDatabaseConnection(): Promise<void> {
@@ -27,6 +43,7 @@ export default class App {
 				'Unable to connect to the database using Prisma: ',
 				error,
 			);
+			await this.prisma.$disconnect();
 			process.exit(1);
 		}
 	}
