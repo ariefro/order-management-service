@@ -1,7 +1,6 @@
-import { PrismaClient, Product } from '@prisma/client';
+import { Product } from '@prisma/client';
 import logger from '../config/logger';
-
-const prisma = new PrismaClient();
+import prisma from '../../prisma/client';
 
 interface PaginatioParams {
 	offset: number;
@@ -22,7 +21,18 @@ export class ProductService {
 
 			return { products, totalItems };
 		} catch (error) {
-			logger.error('Error in ProductService.getAllProducts:', error);
+			logger.error('Error in ProductService.getAllProducts: ', error);
+			throw error;
+		}
+	}
+
+	async getProductById(id: number) {
+		try {
+			const product = await prisma.product.findUnique({ where: { id } });
+
+			return product;
+		} catch (error) {
+			logger.error('Error in ProductService.getProductById: ', error);
 			throw error;
 		}
 	}

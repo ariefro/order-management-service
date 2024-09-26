@@ -3,8 +3,9 @@ import { InternalServerError, NotFoundError, ValidationError } from '../errors';
 
 const errorHandler = (
 	err: Error,
-	req: express.Request,
+	_req: express.Request,
 	res: express.Response,
+	_next: express.NextFunction,
 ): express.Response => {
 	if (err instanceof ValidationError) {
 		return res.status(err.status).json({ error: err.message });
