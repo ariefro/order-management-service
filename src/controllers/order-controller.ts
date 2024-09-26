@@ -19,8 +19,13 @@ export default class OrderController {
 			const limit = parseInt(req.query.limit as string, 10) || 10;
 
 			const offset = (page - 1) * limit;
+
+			const customerName =
+				(req.query.customer_name as string) || undefined;
+			const orderDate = (req.query.order_date as string) || undefined;
+
 			const { orders, totalItems } = await this.orderService.getAllOrders(
-				{ limit, offset },
+				{ limit, offset, customerName, orderDate },
 			);
 
 			const totalPages = Math.ceil(totalItems / limit);
