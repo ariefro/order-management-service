@@ -4,6 +4,8 @@ import logger from './config/logger';
 import helmet from 'helmet';
 import http from 'http';
 import { PrismaClient } from '@prisma/client';
+import apiRoutes from './routes';
+import errorHandler from './middleware/error-handler';
 
 export default class App {
 	public express: Application;
@@ -18,6 +20,7 @@ export default class App {
 
 	public async init(): Promise<void> {
 		this.middleware();
+		this.routes();
 		await this.assertDatabaseConnection();
 	}
 
@@ -32,6 +35,11 @@ export default class App {
 			origin: process.env.ALLOWED_ORIGIN_URL,
 		};
 		this.express.use(cors(corsOptions));
+	}
+
+	private routes(): void {
+		this.express.use('/api', apiRoutes);
+		this.express.use(errorHandler);
 	}
 
 	private async assertDatabaseConnection(): Promise<void> {
