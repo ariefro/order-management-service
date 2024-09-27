@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { successResponse } from '../middleware/success-response';
 import { OrderService } from '../services/order-service';
+import { statusCreated } from '../constants/http-status-code';
 
 export default class OrderController {
 	private orderService: OrderService;
@@ -36,6 +37,31 @@ export default class OrderController {
 				currentPage: page,
 				pageSize: limit,
 			});
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	public async createOrder(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const { customerName, orderItems } = req.body;
+
+			const order = await this.orderService.createOrder(
+				customerName,
+				orderItems,
+			);
+
+			successResponse(
+				res,
+				{ order },
+				'Order created successfully',
+				undefined,
+				statusCreated,
+			);
 		} catch (error) {
 			next(error);
 		}
