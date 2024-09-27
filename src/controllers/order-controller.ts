@@ -4,6 +4,11 @@ import { OrderService } from '../services/order-service';
 import { statusCreated } from '../constants/http-status-code';
 import { ValidationError } from '../errors';
 
+interface OrderItemInput {
+	productId: number;
+	quantity: number;
+}
+
 export default class OrderController {
 	private orderService: OrderService;
 
@@ -50,6 +55,8 @@ export default class OrderController {
 	): Promise<void> {
 		try {
 			const { customerName, orderItems } = req.body;
+
+			this.validateCreateOrderInput(customerName, orderItems);
 
 			const order = await this.orderService.createOrder(
 				customerName,
@@ -98,11 +105,8 @@ export default class OrderController {
 	): Promise<void> {
 		try {
 			const { orderItems } = req.body;
-			if (!orderItems || orderItems.length === 0) {
-				throw new ValidationError(
-					'Order must have at least one product',
-				);
-			}
+
+			this.validateOrderItems(orderItems);
 
 			const id = parseInt(req.params.id, 10);
 			if (isNaN(id) || id <= 0) {
@@ -134,5 +138,43 @@ export default class OrderController {
 		} catch (error) {
 			next(error);
 		}
+	}
+
+	private validateCustomerName(name: string): void {
+		if (!name || typeof name !== 'string' || name.trim() === '') {
+			throw new ValidationError('Customer name is required');
+		}
+	}
+
+	private validateOrderItems(orderItems: OrderItemInput[]): void {
+		if (!orderItems || orderItems.length === 0) {
+			throw new ValidationError('Order must have at least one product');
+		}
+
+		for (const item of orderItems) {
+			if (!item.productId) {
+				throw new ValidationError(
+					'You should fill all of mandatory field',
+				);
+			}
+
+			if (isNaN(item.productId)) {
+				throw new ValidationError('Invalid producdt ID');
+			}
+
+			if (!item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
+				throw new ValidationError(
+					'Quantity is required and must be greater than 0',
+				);
+			}
+		}
+	}
+
+	private validateCreateOrderInput(
+		customerName: string,
+		orderItems: OrderItemInput[],
+	): void {
+		this.validateCustomerName(customerName);
+		this.validateOrderItems(orderItems);
 	}
 }
