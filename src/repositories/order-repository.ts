@@ -16,22 +16,28 @@ export class OrderRepository {
 		offset,
 		limit,
 		filters,
-	}: PaginatioParams): Promise<{
-		orders: Order[];
-		totalItems: number;
-	}> {
+	}: PaginatioParams) {
 		try {
-			const totalItems = await prisma.order.count({ where: filters });
 			const orders = await prisma.order.findMany({
 				where: filters,
 				skip: offset,
 				take: limit,
 				include: {
 					customer: true,
+					orderItem: true,
 				},
 			});
 
-			return { orders, totalItems };
+			return orders;
+		} catch (error) {
+			logger.error('Error in OrderRepository.getAllOrders:', error);
+			throw error;
+		}
+	}
+
+	public async countAll(filters: any) {
+		try {
+			return await prisma.order.count({ where: filters });
 		} catch (error) {
 			logger.error('Error in OrderRepository.getAllOrders:', error);
 			throw error;

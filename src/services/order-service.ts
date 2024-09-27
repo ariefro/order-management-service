@@ -63,14 +63,20 @@ export class OrderService {
 				};
 			}
 
-			const { orders, totalItems } =
-				await this.orderRepository.findAllWithPagination({
-					offset,
-					limit,
-					filters,
-				});
+			const orders = await this.orderRepository.findAllWithPagination({
+				offset,
+				limit,
+				filters,
+			});
 
-			return { orders, totalItems };
+			const totalItems = await this.orderRepository.countAll(filters);
+
+			const ordersWithTotalProducts = orders.map((order) => ({
+				...order,
+				totalProducts: order.orderItem.length,
+			}));
+
+			return { orders: ordersWithTotalProducts, totalItems };
 		} catch (error) {
 			logger.error('Error in OrderService.getAllOrders:', error);
 			throw error;
