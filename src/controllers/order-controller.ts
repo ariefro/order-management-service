@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { successResponse } from '../middleware/success-response';
 import { OrderService } from '../services/order-service';
 import { statusCreated } from '../constants/http-status-code';
+import { NotFoundError, ValidationError } from '../errors';
 
 export default class OrderController {
 	private orderService: OrderService;
@@ -61,6 +62,32 @@ export default class OrderController {
 				'Order created successfully',
 				undefined,
 				statusCreated,
+			);
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	public async getOrderDetail(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const id = parseInt(req.params.id, 10);
+			if (isNaN(id) || id <= 0) {
+				throw new ValidationError('Invalid order ID');
+			}
+
+			const order = await this.orderService.getOrderById(id);
+			if (!order) {
+				throw new NotFoundError('Order not found');
+			}
+
+			successResponse(
+				res,
+				{ order },
+				'Order detail fetched successfully',
 			);
 		} catch (error) {
 			next(error);

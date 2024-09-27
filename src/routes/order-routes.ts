@@ -10,5 +10,8 @@ router.get('/', (req, res, next) =>
 router.post('/', (req, res, next) =>
 	orderController.createOrder(req, res, next),
 );
+router.get('/:id', (req, res, next) =>
+	orderController.getOrderDetail(req, res, next),
+);
 
 export default router;

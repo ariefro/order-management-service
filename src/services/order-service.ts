@@ -112,6 +112,18 @@ export class OrderService {
 		}
 	}
 
+	public async getOrderById(id: number) {
+		try {
+			return await prisma.order.findUnique({
+				where: { id },
+				include: { customer: true, orderItem: true },
+			});
+		} catch (error) {
+			logger.error('Error in OrderService.getOrderById: ', error);
+			throw error;
+		}
+	}
+
 	private async validateOrderItems(
 		orderItems: OrderItemInput[],
 	): Promise<{ orderItemsData: any[] }> {
