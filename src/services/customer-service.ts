@@ -1,24 +1,24 @@
 import { Prisma } from '@prisma/client';
 import logger from '../config/logger';
 import { InternalServerError } from '../errors';
+import { CustomerRepository } from '../repositories/customer-repository';
 
 export class CustomerService {
-	async findOrCreateCustomerByNameInTransaction(
+	private customerRepository: CustomerRepository;
+
+	constructor() {
+		this.customerRepository = new CustomerRepository();
+	}
+
+	public async findOrCreateCustomerByNameInTransaction(
 		tx: Prisma.TransactionClient,
 		name: string,
 	) {
 		try {
-			let customer = await tx.customer.findFirst({
-				where: { name },
-			});
-
-			if (!customer) {
-				customer = await tx.customer.create({
-					data: { name },
-				});
-			}
-
-			return customer;
+			return await this.customerRepository.findOrCreateByNameInTransaction(
+				tx,
+				name,
+			);
 		} catch (error) {
 			logger.error(
 				'Error in CustomerService.findOrCreateCustomerByNameInTransaction: ',
