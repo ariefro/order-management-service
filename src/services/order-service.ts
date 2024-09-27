@@ -124,6 +124,35 @@ export class OrderService {
 		}
 	}
 
+	public async deleteOrderById(id: number) {
+		try {
+			const order = await prisma.order.findUnique({
+				where: { id },
+			});
+
+			if (!order) {
+				throw new NotFoundError('Order not found');
+			}
+
+			const transaction = await prisma.$transaction(async (tx) => {
+				await tx.orderItem.deleteMany({
+					where: { orderId: id },
+				});
+
+				await tx.order.delete({
+					where: { id },
+				});
+
+				return true;
+			});
+
+			return transaction;
+		} catch (error) {
+			logger.error('Error in OrderService.deleteOrderById: ', error);
+			throw error;
+		}
+	}
+
 	private async validateOrderItems(
 		orderItems: OrderItemInput[],
 	): Promise<{ orderItemsData: any[] }> {

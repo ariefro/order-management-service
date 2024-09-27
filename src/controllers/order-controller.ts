@@ -93,4 +93,23 @@ export default class OrderController {
 			next(error);
 		}
 	}
+
+	public async deleteOrder(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const id = parseInt(req.params.id, 10);
+			if (isNaN(id) || id <= 0) {
+				throw new ValidationError('Invalid order ID');
+			}
+
+			await this.orderService.deleteOrderById(id);
+
+			successResponse(res, undefined, 'Successfully deleted order');
+		} catch (error) {
+			next(error);
+		}
+	}
 }
