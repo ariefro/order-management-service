@@ -24,7 +24,7 @@ export class OrderRepository {
 				take: limit,
 				include: {
 					customer: true,
-					orderItem: true,
+					orderItems: true,
 				},
 			});
 
@@ -55,7 +55,7 @@ export class OrderRepository {
 				data: {
 					customer: { connect: { id: customerId } },
 					totalOrderPrice,
-					orderItem: {
+					orderItems: {
 						create: orderItemsData,
 					},
 				},
@@ -75,7 +75,7 @@ export class OrderRepository {
 		try {
 			return await prisma.order.findUnique({
 				where: { id },
-				include: { customer: true, orderItem: true },
+				include: { customer: true, orderItems: true },
 			});
 		} catch (error) {
 			logger.error('Error in OrderRepository.findById: ', error);
@@ -93,7 +93,7 @@ export class OrderRepository {
 				where: { id },
 				data: {
 					totalOrderPrice,
-					orderItem: { deleteMany: {}, create: orderItemsData },
+					orderItems: { deleteMany: {}, create: orderItemsData },
 				},
 			});
 		} catch (error) {

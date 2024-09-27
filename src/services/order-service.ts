@@ -73,7 +73,7 @@ export class OrderService {
 
 			const ordersWithTotalProducts = orders.map((order) => ({
 				...order,
-				totalProducts: order.orderItem.length,
+				totalProducts: order.orderItems.length,
 			}));
 
 			return { orders: ordersWithTotalProducts, totalItems };
