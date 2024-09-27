@@ -42,7 +42,7 @@ model Order {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  customer Customer @relation(fields: [customerId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   customerId Int
 
   orderItems OrderItem[]
@@ -57,10 +57,10 @@ model OrderItem {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  order Order @relation(fields: [orderId], references: [id])
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   orderId Int
 
-  product Product @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   productId Int
 
   @@map("order_items")
