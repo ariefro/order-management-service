@@ -1,34 +1,31 @@
 import { Product } from '@prisma/client';
 import logger from '../config/logger';
-import prisma from '../../prisma/client';
-
-interface PaginatioParams {
-	offset: number;
-	limit: number;
-}
+import { ProductRepository } from '../repositories/product-repository';
+import { NotFoundError } from '../errors';
 
 export class ProductService {
-	async getAllProducts({ offset, limit }: PaginatioParams): Promise<{
-		products: Product[];
-		totalItems: number;
-	}> {
-		try {
-			const totalItems = await prisma.product.count();
-			const products = await prisma.product.findMany({
-				skip: offset,
-				take: limit,
-			});
+	private productRepository: ProductRepository;
 
-			return { products, totalItems };
+	constructor() {
+		this.productRepository = new ProductRepository();
+	}
+
+	public async getAllProducts(): Promise<Product[]> {
+		try {
+			return await this.productRepository.findAll();
 		} catch (error) {
 			logger.error('Error in ProductService.getAllProducts: ', error);
 			throw error;
 		}
 	}
 
-	async getProductById(id: number) {
+	public async getProductById(id: number): Promise<Product | null> {
 		try {
-			const product = await prisma.product.findUnique({ where: { id } });
+			const product = await this.productRepository.findById(id);
+
+			if (!product) {
+				throw new NotFoundError(`Product with ID ${id} not found`);
+			}
 
 			return product;
 		} catch (error) {
