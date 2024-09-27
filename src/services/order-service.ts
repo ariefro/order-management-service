@@ -1,9 +1,11 @@
 import { Order } from '@prisma/client';
 import logger from '../config/logger';
 import prisma from '../../prisma/client';
-import { CustomerService } from './customer-service';
-import { ProductService } from './product-service';
-import { InternalServerError, NotFoundError } from '../errors';
+import { NotFoundError } from '../errors';
+import { OrderRepository } from '../repositories/order-repository';
+import { CustomerRepository } from '../repositories/customer-repository';
+import { OrderItemRepository } from '../repositories/order-item-repository';
+import { ProductRepository } from '../repositories/product-repository';
 
 interface PaginatioParams {
 	offset: number;
@@ -18,12 +20,16 @@ interface OrderItemInput {
 }
 
 export class OrderService {
-	private customerService: CustomerService;
-	private productService: ProductService;
+	private orderRepository: OrderRepository;
+	private customerRepository: CustomerRepository;
+	private orderItemRepository: OrderItemRepository;
+	private productRepository: ProductRepository;
 
 	constructor() {
-		this.customerService = new CustomerService();
-		this.productService = new ProductService();
+		this.orderRepository = new OrderRepository();
+		this.customerRepository = new CustomerRepository();
+		this.orderItemRepository = new OrderItemRepository();
+		this.productRepository = new ProductRepository();
 	}
 
 	public async getAllOrders({
@@ -57,15 +63,12 @@ export class OrderService {
 				};
 			}
 
-			const totalItems = await prisma.order.count({ where: filters });
-			const orders = await prisma.order.findMany({
-				where: filters,
-				skip: offset,
-				take: limit,
-				include: {
-					customer: true,
-				},
-			});
+			const { orders, totalItems } =
+				await this.orderRepository.findAllWithPagination({
+					offset,
+					limit,
+					filters,
+				});
 
 			return { orders, totalItems };
 		} catch (error) {
@@ -79,28 +82,24 @@ export class OrderService {
 		orderItems: OrderItemInput[],
 	): Promise<Order> {
 		try {
-			const { orderItemsData } =
-				await this.validateOrderItems(orderItems);
+			const orderItemsData = await this.validateOrderItems(orderItems);
 
 			const totalOrderPrice =
 				this.calculateTotalOrderPrice(orderItemsData);
 
 			const transaction = await prisma.$transaction(async (tx) => {
 				const customer =
-					await this.customerService.findOrCreateCustomerByNameInTransaction(
+					await this.customerRepository.findOrCreateByNameInTransaction(
 						tx,
 						customerName,
 					);
 
-				const order = await tx.order.create({
-					data: {
-						customer: { connect: { id: customer.id } },
-						totalOrderPrice,
-						orderItem: {
-							create: orderItemsData,
-						},
-					},
-				});
+				const order = await this.orderRepository.createInTransaction(
+					tx,
+					customer.id,
+					totalOrderPrice,
+					orderItemsData,
+				);
 
 				return order;
 			});
@@ -108,16 +107,19 @@ export class OrderService {
 			return transaction;
 		} catch (error) {
 			logger.error('Error in OrderService.createOrder:', error);
-			throw new InternalServerError('Failed to create order');
+			throw error;
 		}
 	}
 
 	public async getOrderById(id: number) {
 		try {
-			return await prisma.order.findUnique({
-				where: { id },
-				include: { customer: true, orderItem: true },
-			});
+			const order = await this.orderRepository.findById(id);
+
+			if (!order) {
+				throw new NotFoundError('Order not found');
+			}
+
+			return order;
 		} catch (error) {
 			logger.error('Error in OrderService.getOrderById: ', error);
 			throw error;
@@ -126,22 +128,19 @@ export class OrderService {
 
 	public async deleteOrderById(id: number) {
 		try {
-			const order = await prisma.order.findUnique({
-				where: { id },
-			});
+			const order = await this.orderRepository.findById(id);
 
 			if (!order) {
 				throw new NotFoundError('Order not found');
 			}
 
 			const transaction = await prisma.$transaction(async (tx) => {
-				await tx.orderItem.deleteMany({
-					where: { orderId: id },
-				});
+				await this.orderItemRepository.deleteManyByOrderIdInTransaction(
+					tx,
+					id,
+				);
 
-				await tx.order.delete({
-					where: { id },
-				});
+				await this.orderRepository.deleteByIdInTransaction(tx, id);
 
 				return true;
 			});
@@ -155,28 +154,33 @@ export class OrderService {
 
 	private async validateOrderItems(
 		orderItems: OrderItemInput[],
-	): Promise<{ orderItemsData: any[] }> {
-		const orderItemsData = await Promise.all(
-			orderItems.map(async (item) => {
-				const product = await this.productService.getProductById(
-					item.productId,
-				);
-
-				if (!product) {
-					throw new NotFoundError(
-						`Product with ID ${item.productId} not found`,
+	): Promise<any[]> {
+		try {
+			const orderItemsData = await Promise.all(
+				orderItems.map(async (item) => {
+					const product = await this.productRepository.findById(
+						item.productId,
 					);
-				}
 
-				return {
-					product: { connect: { id: product.id } },
-					quantity: item.quantity,
-					price: product.price,
-				};
-			}),
-		);
+					if (!product) {
+						throw new NotFoundError(
+							`Product with ID ${item.productId} not found`,
+						);
+					}
 
-		return { orderItemsData };
+					return {
+						product: { connect: { id: product.id } },
+						quantity: item.quantity,
+						price: product.price,
+					};
+				}),
+			);
+
+			return orderItemsData;
+		} catch (error) {
+			logger.error('Error in OrderService.validateOrderItems: ', error);
+			throw error;
+		}
 	}
 
 	private calculateTotalOrderPrice(orderItemsData: any[]): number {

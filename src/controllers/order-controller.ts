@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { successResponse } from '../middleware/success-response';
 import { OrderService } from '../services/order-service';
 import { statusCreated } from '../constants/http-status-code';
-import { NotFoundError, ValidationError } from '../errors';
+import { ValidationError } from '../errors';
 
 export default class OrderController {
 	private orderService: OrderService;
@@ -80,9 +80,6 @@ export default class OrderController {
 			}
 
 			const order = await this.orderService.getOrderById(id);
-			if (!order) {
-				throw new NotFoundError('Order not found');
-			}
 
 			successResponse(
 				res,
