@@ -91,6 +91,32 @@ export default class OrderController {
 		}
 	}
 
+	public async editOrder(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const { orderItems } = req.body;
+			if (!orderItems || orderItems.length === 0) {
+				throw new ValidationError(
+					'Order must have at least one product',
+				);
+			}
+
+			const id = parseInt(req.params.id, 10);
+			if (isNaN(id) || id <= 0) {
+				throw new ValidationError('Invalid order ID');
+			}
+
+			const order = await this.orderService.editOrderById(id, orderItems);
+
+			successResponse(res, { order }, 'Order updated successfully');
+		} catch (error) {
+			next(error);
+		}
+	}
+
 	public async deleteOrder(
 		req: Request,
 		res: Response,

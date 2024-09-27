@@ -77,6 +77,25 @@ export class OrderRepository {
 		}
 	}
 
+	public async updateById(
+		id: number,
+		orderItemsData: Prisma.OrderItemCreateWithoutOrderInput[],
+		totalOrderPrice: number,
+	): Promise<Order> {
+		try {
+			return await prisma.order.update({
+				where: { id },
+				data: {
+					totalOrderPrice,
+					orderItem: { deleteMany: {}, create: orderItemsData },
+				},
+			});
+		} catch (error) {
+			logger.error('Error in OrderRepository.updateById: ', error);
+			throw error;
+		}
+	}
+
 	public async deleteByIdInTransaction(
 		tx: Prisma.TransactionClient,
 		id: number,

@@ -126,6 +126,32 @@ export class OrderService {
 		}
 	}
 
+	public async editOrderById(
+		id: number,
+		orderItems: OrderItemInput[],
+	): Promise<Order> {
+		try {
+			const order = await this.orderRepository.findById(id);
+			if (!order) {
+				throw new NotFoundError('Order not found');
+			}
+
+			const orderItemsData = await this.validateOrderItems(orderItems);
+
+			const totalOrderPrice =
+				this.calculateTotalOrderPrice(orderItemsData);
+
+			return await this.orderRepository.updateById(
+				id,
+				orderItemsData,
+				totalOrderPrice,
+			);
+		} catch (error) {
+			logger.error('Error in OrderService.editOrderById: ', error);
+			throw error;
+		}
+	}
+
 	public async deleteOrderById(id: number) {
 		try {
 			const order = await this.orderRepository.findById(id);
