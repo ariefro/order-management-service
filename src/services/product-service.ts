@@ -61,4 +61,19 @@ export class ProductService {
 			throw error;
 		}
 	}
+
+	public async deleteProduct(id: number): Promise<Product> {
+		try {
+			const product = await this.productRepository.findById(id);
+
+			if (!product) {
+				throw new NotFoundError(`Product with ID ${id} not found`);
+			}
+
+			return await this.productRepository.deleteOne(id);
+		} catch (error) {
+			logger.error('Error in ProductService.deleteProduct: ', error);
+			throw error;
+		}
+	}
 }

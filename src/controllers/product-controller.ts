@@ -100,6 +100,22 @@ export default class ProductController {
 		}
 	}
 
+	public async deleteProduct(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const id = parseInt(req.params.id, 10);
+
+			await this.productService.deleteProduct(id);
+
+			successResponse(res, undefined, 'Product deleted successfully');
+		} catch (error) {
+			next(error);
+		}
+	}
+
 	private validateCreateProductInput(name: string, price: number): void {
 		if (!name || name.trim() === '' || !price) {
 			throw new ValidationError('Please fill all of mandatory field');

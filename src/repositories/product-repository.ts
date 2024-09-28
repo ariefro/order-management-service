@@ -45,4 +45,15 @@ export class ProductRepository {
 			throw error;
 		}
 	}
+
+	public async deleteOne(id: number) {
+		try {
+			return await prisma.product.delete({
+				where: { id },
+			});
+		} catch (error) {
+			logger.error('Error in ProductRepository.deleteOne: ', error);
+			throw error;
+		}
+	}
 }
