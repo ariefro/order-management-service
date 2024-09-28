@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/server.ts",
     "db:migrate": "pnpm prisma migrate dev && pnpm prisma generate",
-    "db:push": "pnpm prisma db push",
+    "db:seed": "ts-node prisma/seed.ts",
     "prepare": "husky"
   },
   "keywords": [],
