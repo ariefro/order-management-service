@@ -3,9 +3,11 @@ import express, { Application } from 'express';
 import logger from './config/logger';
 import helmet from 'helmet';
 import http from 'http';
+import swaggerUi from 'swagger-ui-express';
 import apiRoutes from './routes';
 import errorHandler from './middleware/error-handler';
 import prisma from '../prisma/client';
+import swaggerDocument from '../docs/swagger.json';
 
 export default class App {
 	public express: Application;
@@ -36,6 +38,11 @@ export default class App {
 	}
 
 	private routes(): void {
+		this.express.use(
+			'/api-docs',
+			swaggerUi.serve,
+			swaggerUi.setup(swaggerDocument),
+		);
 		this.express.use('/api', apiRoutes);
 		this.express.use(errorHandler);
 	}
@@ -43,12 +50,9 @@ export default class App {
 	private async assertDatabaseConnection(): Promise<void> {
 		try {
 			await prisma.$connect();
-			logger.info('Connected to the database using Prisma successfully');
+			logger.info('Connected to the database');
 		} catch (error) {
-			logger.error(
-				'Unable to connect to the database using Prisma: ',
-				error,
-			);
+			logger.error('Unable to connect to the database: ', error);
 			await prisma.$disconnect();
 			process.exit(1);
 		}

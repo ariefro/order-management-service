@@ -20,6 +20,14 @@ For an overview of the features to be worked on, see this [Figma](https://www.fi
 The Figma link provides a visual representation and planning of the application's frontend and features.
 
 ## Documentation
+##### API Documentation
+
+Once the server is running, the API documentation is available via Swagger UI. Access it at the following URL:
+
+**Base URL**: `http://localhost:3000/api-docs`
+
+> **Note**: Ensure that the port in the URL matches the value set in your `.env` file under the `PORT` variable. For example, if `PORT=5000`, access the documentation at `http://localhost:5000/api-docs`.
+
 ##### DB Documentation
 
 Access the [DB documentation](https://dbdocs.io/ariefromadhon/Order-Management). Password: `secret`.
