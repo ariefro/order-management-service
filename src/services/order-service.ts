@@ -196,7 +196,7 @@ export class OrderService {
 
 					if (!product) {
 						throw new NotFoundError(
-							`Product with ID ${item.productId} not found`,
+							`One or more products not found`,
 						);
 					}
 

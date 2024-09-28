@@ -10,8 +10,6 @@ interface PaginatioParams {
 }
 
 export class OrderRepository {
-	constructor() {}
-
 	public async findAllWithPagination({
 		offset,
 		limit,

@@ -88,11 +88,7 @@ export default class OrderController {
 
 			const order = await this.orderService.getOrderById(id);
 
-			successResponse(
-				res,
-				{ order },
-				'Order detail fetched successfully',
-			);
+			successResponse(res, { order }, 'Order fetched successfully');
 		} catch (error) {
 			next(error);
 		}
@@ -104,14 +100,14 @@ export default class OrderController {
 		next: NextFunction,
 	): Promise<void> {
 		try {
-			const { orderItems } = req.body;
-
-			this.validateOrderItems(orderItems);
-
 			const id = parseInt(req.params.id, 10);
 			if (isNaN(id) || id <= 0) {
 				throw new ValidationError('Invalid order ID');
 			}
+
+			const { orderItems } = req.body;
+
+			this.validateOrderItems(orderItems);
 
 			const order = await this.orderService.editOrderById(id, orderItems);
 
@@ -153,13 +149,11 @@ export default class OrderController {
 
 		for (const item of orderItems) {
 			if (!item.productId) {
-				throw new ValidationError(
-					'You should fill all of mandatory field',
-				);
+				throw new ValidationError('Please fill all of mandatory field');
 			}
 
 			if (isNaN(item.productId)) {
-				throw new ValidationError('Invalid producdt ID');
+				throw new ValidationError('Invalid product ID');
 			}
 
 			if (!item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
