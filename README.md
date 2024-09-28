@@ -19,6 +19,11 @@ For an overview of the features to be worked on, see this [Figma](https://www.fi
 
 The Figma link provides a visual representation and planning of the application's frontend and features.
 
+## Documentation
+##### DB Documentation
+
+Access the [DB documentation](https://dbdocs.io/ariefromadhon/Order-Management). Password: `secret`.
+
 ## Getting Started
 ##### Install dependencies
  To run the project in development mode simply just install all the dependencies
