@@ -42,4 +42,23 @@ export class ProductService {
 			throw error;
 		}
 	}
+
+	public async updateProduct(
+		id: number,
+		name: string,
+		price: number,
+	): Promise<Product> {
+		try {
+			const product = await this.productRepository.findById(id);
+
+			if (!product) {
+				throw new NotFoundError(`Product with ID ${id} not found`);
+			}
+
+			return await this.productRepository.updateOne(id, name, price);
+		} catch (error) {
+			logger.error('Error in ProductService.updateProduct: ', error);
+			throw error;
+		}
+	}
 }

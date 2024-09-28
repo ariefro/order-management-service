@@ -72,6 +72,34 @@ export default class ProductController {
 		}
 	}
 
+	public async updateProduct(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const id = parseInt(req.params.id, 10);
+			if (isNaN(id) || id <= 0) {
+				throw new ValidationError('Invalid product ID');
+			}
+
+			const name = req.body.name;
+			const price = parseInt(req.body.price, 10);
+
+			this.validateCreateProductInput(name, price);
+
+			const product = await this.productService.updateProduct(
+				id,
+				name,
+				price,
+			);
+
+			successResponse(res, { product }, 'Product updated successfully');
+		} catch (error) {
+			next(error);
+		}
+	}
+
 	private validateCreateProductInput(name: string, price: number): void {
 		if (!name || name.trim() === '' || !price) {
 			throw new ValidationError('Please fill all of mandatory field');

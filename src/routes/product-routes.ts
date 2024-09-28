@@ -13,5 +13,8 @@ router.post('/', (req, res, next) =>
 router.get('/:id', (req, res, next) =>
 	productController.getProductById(req, res, next),
 );
+router.put('/:id', (req, res, next) =>
+	productController.updateProduct(req, res, next),
+);
 
 export default router;

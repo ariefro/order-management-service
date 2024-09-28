@@ -29,4 +29,20 @@ export class ProductRepository {
 			throw error;
 		}
 	}
+
+	public async updateOne(
+		id: number,
+		name: string,
+		price: number,
+	): Promise<Product> {
+		try {
+			return await prisma.product.update({
+				where: { id },
+				data: { name, price },
+			});
+		} catch (error) {
+			logger.error('Error in ProductRepository.updateOne: ', error);
+			throw error;
+		}
+	}
 }
