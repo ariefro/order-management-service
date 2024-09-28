@@ -33,4 +33,13 @@ export class ProductService {
 			throw error;
 		}
 	}
+
+	public async createProduct(name: string, price: number): Promise<Product> {
+		try {
+			return await this.productRepository.createOne(name, price);
+		} catch (error) {
+			logger.error('Error in ProductService.createProduct: ', error);
+			throw error;
+		}
+	}
 }
