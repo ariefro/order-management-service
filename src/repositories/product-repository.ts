@@ -1,11 +1,16 @@
-import { Product } from '@prisma/client';
+import { Product, PrismaClient } from '@prisma/client';
 import logger from '../configs/logger';
-import prisma from '../../prisma/client';
 
 export class ProductRepository {
+	private prisma: PrismaClient;
+
+	constructor(prisma: PrismaClient) {
+		this.prisma = prisma;
+	}
+
 	public async findAll(): Promise<Product[]> {
 		try {
-			return await prisma.product.findMany();
+			return await this.prisma.product.findMany();
 		} catch (error) {
 			logger.error('Error in ProductRepository.findAll: ', error);
 			throw error;
@@ -14,7 +19,7 @@ export class ProductRepository {
 
 	public async findById(id: number): Promise<Product | null> {
 		try {
-			return await prisma.product.findUnique({ where: { id } });
+			return await this.prisma.product.findUnique({ where: { id } });
 		} catch (error) {
 			logger.error('Error in ProductRepository.findById: ', error);
 			throw error;
@@ -23,7 +28,7 @@ export class ProductRepository {
 
 	public async createOne(name: string, price: number): Promise<Product> {
 		try {
-			return await prisma.product.create({ data: { name, price } });
+			return await this.prisma.product.create({ data: { name, price } });
 		} catch (error) {
 			logger.error('Error in ProductRepository.createOne: ', error);
 			throw error;
@@ -36,7 +41,7 @@ export class ProductRepository {
 		price: number,
 	): Promise<Product> {
 		try {
-			return await prisma.product.update({
+			return await this.prisma.product.update({
 				where: { id },
 				data: { name, price },
 			});
@@ -48,7 +53,7 @@ export class ProductRepository {
 
 	public async deleteOne(id: number) {
 		try {
-			return await prisma.product.delete({
+			return await this.prisma.product.delete({
 				where: { id },
 			});
 		} catch (error) {
