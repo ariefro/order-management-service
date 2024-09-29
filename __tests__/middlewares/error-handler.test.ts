@@ -6,7 +6,7 @@ import {
 } from '../../src/errors';
 import { Response, Request, NextFunction } from 'express';
 
-describe('Error handler middleware', () => {
+describe('errorHandler function', () => {
 	let mockRes: Partial<Response>;
 	let mockReq: Partial<Request>;
 	let mockNext: NextFunction;

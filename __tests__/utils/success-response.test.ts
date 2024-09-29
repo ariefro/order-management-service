@@ -2,7 +2,7 @@ import { successResponse } from '../../src/utils/success-response';
 import { statusOk } from '../../src/constants/http-status-code';
 import { Response } from 'express';
 
-describe('Success Response middleware', () => {
+describe('successResponse function', () => {
 	let mockRes: Partial<Response>;
 
 	beforeEach(() => {
