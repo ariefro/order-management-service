@@ -1,5 +1,5 @@
 import { Order, Prisma } from '@prisma/client';
-import logger from '../config/logger';
+import logger from '../configs/logger';
 import prisma from '../../prisma/client';
 import { InternalServerError } from '../errors';
 

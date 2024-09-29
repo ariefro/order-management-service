@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { successResponse } from '../middleware/success-response';
+import { successResponse } from '../middlewares/success-response';
 import { OrderService } from '../services/order-service';
 import { statusCreated } from '../constants/http-status-code';
 import { ValidationError } from '../errors';

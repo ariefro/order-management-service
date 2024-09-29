@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import logger from '../config/logger';
+import logger from '../configs/logger';
 
 export class OrderItemRepository {
 	public async deleteManyByOrderIdInTransaction(

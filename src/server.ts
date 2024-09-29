@@ -1,7 +1,7 @@
 import * as http from 'http';
 import App from './App';
 import { AddressInfo } from 'net';
-import logger from './config/logger';
+import logger from './configs/logger';
 
 const app: App = new App();
 let server: http.Server;

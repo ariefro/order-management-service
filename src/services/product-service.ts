@@ -1,5 +1,5 @@
 import { Product } from '@prisma/client';
-import logger from '../config/logger';
+import logger from '../configs/logger';
 import { ProductRepository } from '../repositories/product-repository';
 import { NotFoundError } from '../errors';
 

@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import logger from '../config/logger';
+import logger from '../configs/logger';
 import { InternalServerError } from '../errors';
 import { CustomerRepository } from '../repositories/customer-repository';
 

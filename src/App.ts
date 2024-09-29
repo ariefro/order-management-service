@@ -1,11 +1,11 @@
 import cors from 'cors';
 import express, { Application } from 'express';
-import logger from './config/logger';
+import logger from './configs/logger';
 import helmet from 'helmet';
 import http from 'http';
 import swaggerUi from 'swagger-ui-express';
 import apiRoutes from './routes';
-import errorHandler from './middleware/error-handler';
+import errorHandler from './middlewares/error-handler';
 import prisma from '../prisma/client';
 import swaggerDocument from '../docs/swagger.json';
 

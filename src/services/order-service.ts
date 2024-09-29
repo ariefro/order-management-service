@@ -1,5 +1,5 @@
 import { Order } from '@prisma/client';
-import logger from '../config/logger';
+import logger from '../configs/logger';
 import prisma from '../../prisma/client';
 import { NotFoundError } from '../errors';
 import { OrderRepository } from '../repositories/order-repository';
