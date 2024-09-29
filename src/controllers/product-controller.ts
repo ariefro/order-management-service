@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ProductService } from '../services/product-service';
-import { successResponse } from '../middlewares/success-response';
+import { successResponse } from '../utils/success-response';
 import { ValidationError } from '../errors';
 import { statusCreated } from '../constants/http-status-code';
 
