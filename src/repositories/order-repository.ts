@@ -1,6 +1,5 @@
-import { Order, Prisma } from '@prisma/client';
+import { Order, Prisma, PrismaClient } from '@prisma/client';
 import logger from '../configs/logger';
-import prisma from '../../prisma/client';
 import { InternalServerError } from '../errors';
 
 interface PaginatioParams {
@@ -10,13 +9,19 @@ interface PaginatioParams {
 }
 
 export class OrderRepository {
+	private prisma: PrismaClient;
+
+	constructor(prisma: PrismaClient) {
+		this.prisma = prisma;
+	}
+
 	public async findAllWithPagination({
 		offset,
 		limit,
 		filters,
 	}: PaginatioParams) {
 		try {
-			const orders = await prisma.order.findMany({
+			const orders = await this.prisma.order.findMany({
 				where: filters,
 				skip: offset,
 				take: limit,
@@ -35,7 +40,7 @@ export class OrderRepository {
 
 	public async countAll(filters: any) {
 		try {
-			return await prisma.order.count({ where: filters });
+			return await this.prisma.order.count({ where: filters });
 		} catch (error) {
 			logger.error('Error in OrderRepository.getAllOrders:', error);
 			throw error;
@@ -71,7 +76,7 @@ export class OrderRepository {
 
 	public async findById(id: number) {
 		try {
-			return await prisma.order.findUnique({
+			return await this.prisma.order.findUnique({
 				where: { id },
 				include: { customer: true, orderItems: true },
 			});
@@ -87,7 +92,7 @@ export class OrderRepository {
 		totalOrderPrice: number,
 	): Promise<Order> {
 		try {
-			return await prisma.order.update({
+			return await this.prisma.order.update({
 				where: { id },
 				data: {
 					totalOrderPrice,
