@@ -1,83 +1,90 @@
-import express from 'express';
-import request from 'supertest';
 import errorHandler from '../../src/middlewares/error-handler';
 import {
 	ValidationError,
 	NotFoundError,
 	InternalServerError,
 } from '../../src/errors';
+import { Response, Request, NextFunction } from 'express';
 
-// Mock errors
-const mockValidationError = new ValidationError('Validation error occurred');
-const mockNotFoundError = new NotFoundError('Resource not found');
-const mockInternalServerError = new InternalServerError(
-	'Internal Server Error',
-);
-
-describe('Error Handler Middleware', () => {
-	let app: express.Express;
+describe('Error handler middleware', () => {
+	let mockRes: Partial<Response>;
+	let mockReq: Partial<Request>;
+	let mockNext: NextFunction;
 
 	beforeEach(() => {
-		app = express();
-		app.use(express.json());
-
-		// Sample route to trigger errors
-		app.get('/test-validation-error', (_req, _res, next) => {
-			next(mockValidationError);
-		});
-
-		app.get('/test-not-found-error', (_req, _res, next) => {
-			next(mockNotFoundError);
-		});
-
-		app.get('/test-internal-server-error', (_req, _res, next) => {
-			next(mockInternalServerError);
-		});
-
-		app.get('/test-unknown-error', (_req, _res, next) => {
-			next(new Error('An unexpected error occurred'));
-		});
-
-		app.use(errorHandler);
+		mockRes = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+		};
+		mockReq = {};
+		mockNext = jest.fn();
 	});
 
-	it('should handle ValidationError', async () => {
-		const res = await request(app).get('/test-validation-error');
+	it('should handle ValidationError', () => {
+		const validationError = new ValidationError(
+			'Validation error occurred',
+		);
+		errorHandler(
+			validationError,
+			mockReq as Request,
+			mockRes as Response,
+			mockNext,
+		);
 
-		expect(res.status).toBe(mockValidationError.status);
-		expect(res.body).toEqual({
+		expect(mockRes.status).toHaveBeenCalledWith(validationError.status);
+		expect(mockRes.json).toHaveBeenCalledWith({
 			status: 'error',
-			message: mockValidationError.message,
+			message: validationError.message,
 		});
 	});
 
-	it('should handle NotFoundError', async () => {
-		const res = await request(app).get('/test-not-found-error');
+	it('should handle NotFoundError', () => {
+		const notFoundError = new NotFoundError('Resource not found');
+		errorHandler(
+			notFoundError,
+			mockReq as Request,
+			mockRes as Response,
+			mockNext,
+		);
 
-		expect(res.status).toBe(mockNotFoundError.status);
-		expect(res.body).toEqual({
+		expect(mockRes.status).toHaveBeenCalledWith(notFoundError.status);
+		expect(mockRes.json).toHaveBeenCalledWith({
 			status: 'error',
-			message: mockNotFoundError.message,
+			message: notFoundError.message,
 		});
 	});
 
-	it('should handle InternalServerError', async () => {
-		const res = await request(app).get('/test-internal-server-error');
+	it('should handle InternalServerError', () => {
+		const internalServerError = new InternalServerError(
+			'Internal Server Error',
+		);
+		errorHandler(
+			internalServerError,
+			mockReq as Request,
+			mockRes as Response,
+			mockNext,
+		);
 
-		expect(res.status).toBe(mockInternalServerError.status);
-		expect(res.body).toEqual({
+		expect(mockRes.status).toHaveBeenCalledWith(internalServerError.status);
+		expect(mockRes.json).toHaveBeenCalledWith({
 			status: 'error',
-			message: mockInternalServerError.message,
+			message: internalServerError.message,
 		});
 	});
 
-	it('should handle unknown errors (default to 500)', async () => {
-		const res = await request(app).get('/test-unknown-error');
+	it('should handle unknown errors with a 500 status', () => {
+		const unknownError = new Error('An unexpected error occurred');
+		errorHandler(
+			unknownError,
+			mockReq as Request,
+			mockRes as Response,
+			mockNext,
+		);
 
-		expect(res.status).toBe(500);
-		expect(res.body).toEqual({
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith({
 			status: 'error',
-			message: 'An unexpected error occurred',
+			message: unknownError.message,
 		});
 	});
 });
