@@ -17,6 +17,7 @@ describe('ProductRepository', () => {
 				findMany: jest.fn(),
 				findUnique: jest.fn(),
 				create: jest.fn(),
+				update: jest.fn(),
 			},
 		} as unknown as PrismaClient;
 
@@ -165,5 +166,49 @@ describe('ProductRepository', () => {
 				mockError,
 			);
 		});
+	});
+
+	it('should update a product successfully', async () => {
+		const productId = 1;
+		const updatedProductData: Product = {
+			id: productId,
+			name: 'Updated Product',
+			price: 150,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		(mockPrisma.product.update as jest.Mock).mockResolvedValue(
+			updatedProductData,
+		);
+
+		const result = await productRepository.updateOne(
+			productId,
+			'Updated Product',
+			150,
+		);
+
+		expect(mockPrisma.product.update).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.product.update).toHaveBeenCalledWith({
+			where: { id: productId },
+			data: { name: 'Updated Product', price: 150 },
+		});
+		expect(result).toEqual(updatedProductData);
+	});
+
+	it('should log and throw an error if update fails', async () => {
+		const productId = 1;
+		const mockError = new Error('Database update error');
+
+		(mockPrisma.product.update as jest.Mock).mockRejectedValue(mockError);
+
+		await expect(
+			productRepository.updateOne(productId, 'Updated Product', 150),
+		).rejects.toThrow(mockError);
+
+		expect(logger.error).toHaveBeenCalledWith(
+			'Error in ProductRepository.updateOne: ',
+			mockError,
+		);
 	});
 });
