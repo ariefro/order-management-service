@@ -6,8 +6,8 @@ import { NotFoundError } from '../errors';
 export class ProductService {
 	private productRepository: ProductRepository;
 
-	constructor() {
-		this.productRepository = new ProductRepository();
+	constructor(productRepository: ProductRepository) {
+		this.productRepository = productRepository;
 	}
 
 	public async getAllProducts(): Promise<Product[]> {

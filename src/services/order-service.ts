@@ -1,6 +1,5 @@
-import { Order } from '@prisma/client';
+import { Order, PrismaClient } from '@prisma/client';
 import logger from '../configs/logger';
-import prisma from '../../prisma/client';
 import { NotFoundError } from '../errors';
 import { OrderRepository } from '../repositories/order-repository';
 import { CustomerRepository } from '../repositories/customer-repository';
@@ -20,16 +19,24 @@ interface OrderItemInput {
 }
 
 export class OrderService {
+	private prisma: PrismaClient;
 	private orderRepository: OrderRepository;
 	private customerRepository: CustomerRepository;
 	private orderItemRepository: OrderItemRepository;
 	private productRepository: ProductRepository;
 
-	constructor() {
-		this.orderRepository = new OrderRepository();
-		this.customerRepository = new CustomerRepository();
-		this.orderItemRepository = new OrderItemRepository();
-		this.productRepository = new ProductRepository();
+	constructor(
+		prisma: PrismaClient,
+		orderRepository: OrderRepository,
+		orderItemRepository: OrderItemRepository,
+		customerRepository: CustomerRepository,
+		productRepository: ProductRepository,
+	) {
+		this.prisma = prisma;
+		this.orderRepository = orderRepository;
+		this.customerRepository = customerRepository;
+		this.orderItemRepository = orderItemRepository;
+		this.productRepository = productRepository;
 	}
 
 	public async getAllOrders({
@@ -93,7 +100,7 @@ export class OrderService {
 			const totalOrderPrice =
 				this.calculateTotalOrderPrice(orderItemsData);
 
-			const transaction = await prisma.$transaction(async (tx) => {
+			const transaction = await this.prisma.$transaction(async (tx) => {
 				const customer =
 					await this.customerRepository.findOrCreateByNameInTransaction(
 						tx,
@@ -166,7 +173,7 @@ export class OrderService {
 				throw new NotFoundError('Order not found');
 			}
 
-			const transaction = await prisma.$transaction(async (tx) => {
+			const transaction = await this.prisma.$transaction(async (tx) => {
 				await this.orderItemRepository.deleteManyByOrderIdInTransaction(
 					tx,
 					id,
