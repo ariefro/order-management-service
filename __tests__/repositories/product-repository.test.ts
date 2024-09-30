@@ -16,6 +16,7 @@ describe('ProductRepository', () => {
 			product: {
 				findMany: jest.fn(),
 				findUnique: jest.fn(),
+				create: jest.fn(),
 			},
 		} as unknown as PrismaClient;
 
@@ -118,6 +119,49 @@ describe('ProductRepository', () => {
 			);
 			expect(logger.error).toHaveBeenCalledWith(
 				'Error in ProductRepository.findById: ',
+				mockError,
+			);
+		});
+	});
+
+	describe('createOne', () => {
+		it('should create and return a product successfully', async () => {
+			const mockProduct: Product = {
+				id: 1,
+				name: 'New Product',
+				price: 100,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+
+			(mockPrisma.product.create as jest.Mock).mockResolvedValue(
+				mockProduct,
+			);
+
+			const result = await productRepository.createOne(
+				'New Product',
+				100,
+			);
+
+			expect(mockPrisma.product.create).toHaveBeenCalledWith({
+				data: { name: 'New Product', price: 100 },
+			});
+			expect(result).toEqual(mockProduct);
+		});
+
+		it('should log and throw an error if create fails', async () => {
+			const mockError = new Error('Database connection error');
+
+			(mockPrisma.product.create as jest.Mock).mockRejectedValue(
+				mockError,
+			);
+
+			await expect(
+				productRepository.createOne('New Product', 100),
+			).rejects.toThrow(mockError);
+
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in ProductRepository.createOne: ',
 				mockError,
 			);
 		});
