@@ -1,19 +1,19 @@
 import { NextFunction, Request, Response } from 'express';
 import { successResponse } from '../utils/success-response';
-import { OrderService } from '../services/order-service';
 import { statusCreated } from '../constants/http-status-code';
 import { ValidationError } from '../errors';
+import { OrderService } from '../services/order-service';
 
 interface OrderItemInput {
 	productId: number;
 	quantity: number;
 }
 
-export default class OrderController {
+export class OrderController {
 	private orderService: OrderService;
 
-	constructor() {
-		this.orderService = new OrderService();
+	constructor(orderService: OrderService) {
+		this.orderService = orderService;
 	}
 
 	public async getAllOrders(

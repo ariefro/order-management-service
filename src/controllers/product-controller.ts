@@ -4,11 +4,11 @@ import { successResponse } from '../utils/success-response';
 import { ValidationError } from '../errors';
 import { statusCreated } from '../constants/http-status-code';
 
-export default class ProductController {
+export class ProductController {
 	private productService: ProductService;
 
-	constructor() {
-		this.productService = new ProductService();
+	constructor(productService: ProductService) {
+		this.productService = productService;
 	}
 
 	public async getAllProducts(

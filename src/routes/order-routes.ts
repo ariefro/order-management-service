@@ -1,8 +1,31 @@
 import { Router } from 'express';
-import OrderController from '../controllers/order-controller';
+import { PrismaClient } from '@prisma/client';
+import { OrderController } from '../controllers';
+import {
+	CustomerRepository,
+	OrderItemRepository,
+	OrderRepository,
+	ProductRepository,
+} from '../repositories';
+import { OrderService } from '../services';
 
 const router = Router();
-const orderController = new OrderController();
+
+const prisma = new PrismaClient();
+const orderRepository = new OrderRepository(prisma);
+const orderItemRepository = new OrderItemRepository();
+const customerRepository = new CustomerRepository();
+const productRepository = new ProductRepository(prisma);
+
+const orderService = new OrderService(
+	prisma,
+	orderRepository,
+	orderItemRepository,
+	customerRepository,
+	productRepository,
+);
+
+const orderController = new OrderController(orderService);
 
 router.get('/', (req, res, next) =>
 	orderController.getAllOrders(req, res, next),

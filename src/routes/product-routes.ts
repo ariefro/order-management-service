@@ -1,8 +1,15 @@
 import { Router } from 'express';
-import ProductController from '../controllers/product-controller';
+import { PrismaClient } from '@prisma/client';
+import { ProductController } from '../controllers';
+import { ProductService } from '../services';
+import { ProductRepository } from '../repositories';
 
 const router = Router();
-const productController = new ProductController();
+
+const prisma = new PrismaClient();
+const productRepository = new ProductRepository(prisma);
+const productService = new ProductService(productRepository);
+const productController = new ProductController(productService);
 
 router.get('/', (req, res, next) =>
 	productController.getAllProducts(req, res, next),
