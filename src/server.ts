@@ -2,8 +2,10 @@ import * as http from 'http';
 import App from './App';
 import { AddressInfo } from 'net';
 import logger from './configs/logger';
+import { PrismaClient } from '@prisma/client';
 
-const app: App = new App();
+const prisma = new PrismaClient();
+const app: App = new App(prisma);
 let server: http.Server;
 const port = process.env.PORT ?? 8080;
 

@@ -6,16 +6,20 @@ import http from 'http';
 import swaggerUi from 'swagger-ui-express';
 import apiRoutes from './routes';
 import errorHandler from './middlewares/error-handler';
-import prisma from '../prisma/client';
 import swaggerDocument from '../docs/swagger.json';
+import { PrismaClient } from '@prisma/client';
 
 export default class App {
 	public express: Application;
 	public httpServer: http.Server;
+	private prisma: PrismaClient;
+	private logger: typeof logger;
 
-	constructor() {
+	constructor(prisma: PrismaClient) {
 		this.express = express();
 		this.httpServer = http.createServer(this.express);
+		this.prisma = prisma;
+		this.logger = logger;
 	}
 
 	public async init(): Promise<void> {
@@ -49,11 +53,11 @@ export default class App {
 
 	private async assertDatabaseConnection(): Promise<void> {
 		try {
-			await prisma.$connect();
-			logger.info('Connected to the database');
+			await this.prisma.$connect();
+			this.logger.info('Connected to the database');
 		} catch (error) {
-			logger.error('Unable to connect to the database: ', error);
-			await prisma.$disconnect();
+			await this.prisma.$disconnect();
+			this.logger.error('Unable to connect to the database: ', error);
 			process.exit(1);
 		}
 	}
