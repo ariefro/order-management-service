@@ -16,12 +16,14 @@ describe('OrderRepository', () => {
 				findMany: jest.fn(),
 				count: jest.fn(),
 				findUnique: jest.fn(),
+				update: jest.fn(),
 			},
 		} as unknown as PrismaClient;
 
 		mockTx = {
 			order: {
 				create: jest.fn(),
+				delete: jest.fn(),
 			},
 		} as unknown as Prisma.TransactionClient;
 
@@ -31,6 +33,14 @@ describe('OrderRepository', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
+
+	const mockOrder: Order = {
+		id: 1,
+		totalOrderPrice: 20000,
+		customerId: 1,
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	};
 
 	const mockOrders = [
 		{
@@ -152,14 +162,6 @@ describe('OrderRepository', () => {
 				{ product: { connect: { id: 1 } }, quantity: 2, price: 75 },
 			];
 
-			const mockOrder: Order = {
-				id: 1,
-				totalOrderPrice,
-				customerId: customerId,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
-
 			(mockTx.order.create as jest.Mock).mockResolvedValue(mockOrder);
 
 			const result = await orderRepository.createInTransaction(
@@ -242,6 +244,81 @@ describe('OrderRepository', () => {
 			);
 			expect(logger.error).toHaveBeenCalledWith(
 				'Error in OrderRepository.findById: ',
+				mockError,
+			);
+		});
+	});
+
+	describe('updateById', () => {
+		it('should update an order with new order items and totalOrderPrice', async () => {
+			const mockOrder = {
+				id: 1,
+				totalOrderPrice: 15000,
+				customerId: 1,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+
+			const orderItemsData: Prisma.OrderItemCreateWithoutOrderInput[] = [
+				{ product: { connect: { id: 1 } }, quantity: 2, price: 7500 },
+			];
+
+			(mockPrisma.order.update as jest.Mock).mockResolvedValue(mockOrder);
+
+			const result = await orderRepository.updateById(
+				1,
+				orderItemsData,
+				15000,
+			);
+
+			expect(mockPrisma.order.update).toHaveBeenCalledWith({
+				where: { id: 1 },
+				data: {
+					totalOrderPrice: 15000,
+					orderItems: { deleteMany: {}, create: orderItemsData },
+				},
+			});
+			expect(result).toEqual(mockOrder);
+		});
+
+		it('should log and throw an error if updateById fails', async () => {
+			const mockError = new Error('Database update error');
+			(mockPrisma.order.update as jest.Mock).mockRejectedValue(mockError);
+
+			await expect(
+				orderRepository.updateById(1, [], 10000),
+			).rejects.toThrow(mockError);
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in OrderRepository.updateById: ',
+				mockError,
+			);
+		});
+	});
+
+	describe('deleteByIdInTransaction', () => {
+		it('should delete an order by id within a transaction', async () => {
+			(mockTx.order.delete as jest.Mock).mockResolvedValue(mockOrder);
+
+			const result = await orderRepository.deleteByIdInTransaction(
+				mockTx,
+				1,
+			);
+
+			expect(mockTx.order.delete).toHaveBeenCalledWith({
+				where: { id: 1 },
+			});
+			expect(result).toEqual(mockOrder);
+		});
+
+		it('should log and throw an error if deleteByIdInTransaction fails', async () => {
+			const mockError = new Error('Delete transaction error');
+			(mockTx.order.delete as jest.Mock).mockRejectedValue(mockError);
+
+			await expect(
+				orderRepository.deleteByIdInTransaction(mockTx, 1),
+			).rejects.toThrow(mockError);
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in OrderRepository.deleteByIdInTransaction: ',
 				mockError,
 			);
 		});
