@@ -15,6 +15,7 @@ describe('OrderRepository', () => {
 			order: {
 				findMany: jest.fn(),
 				count: jest.fn(),
+				findUnique: jest.fn(),
 			},
 		} as unknown as PrismaClient;
 
@@ -31,40 +32,40 @@ describe('OrderRepository', () => {
 		jest.clearAllMocks();
 	});
 
-	describe('findAllWithPagination', () => {
-		it('should return a list of orders with pagination', async () => {
-			const mockOrders = [
+	const mockOrders = [
+		{
+			id: 1,
+			totalOrderPrice: 108000,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+			customerId: 1,
+			customer: {
+				id: 1,
+				name: 'John Doe',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			},
+			orderItems: [
 				{
 					id: 1,
-					totalOrderPrice: 108000,
-					createdAt: new Date(),
-					updatedAt: new Date(),
-					customerId: 1,
-					customer: {
-						id: 1,
-						name: 'John Doe',
-						createdAt: new Date(),
-						updatedAt: new Date(),
-					},
-					orderItems: [
-						{
-							id: 1,
-							orderId: 1,
-							productId: 1,
-							quantity: 2,
-							price: 54000,
-						},
-						{
-							id: 2,
-							orderId: 1,
-							productId: 2,
-							quantity: 1,
-							price: 108000,
-						},
-					],
+					orderId: 1,
+					productId: 1,
+					quantity: 2,
+					price: 54000,
 				},
-			];
+				{
+					id: 2,
+					orderId: 1,
+					productId: 2,
+					quantity: 1,
+					price: 108000,
+				},
+			],
+		},
+	];
 
+	describe('findAllWithPagination', () => {
+		it('should return a list of orders with pagination', async () => {
 			const paginationParams = {
 				offset: 0,
 				limit: 10,
@@ -144,7 +145,7 @@ describe('OrderRepository', () => {
 	});
 
 	describe('createInTransaction', () => {
-		it('should create a order', async () => {
+		it('should create an order in transaction successfully', async () => {
 			const customerId = 1;
 			const totalOrderPrice = 25000;
 			const orderItemsData: Prisma.OrderItemCreateWithoutOrderInput[] = [
@@ -212,6 +213,37 @@ describe('OrderRepository', () => {
 					},
 				},
 			});
+		});
+	});
+
+	describe('findById', () => {
+		it('should return an order by id with customer and orderItems', async () => {
+			(mockPrisma.order.findUnique as jest.Mock).mockResolvedValue(
+				mockOrders,
+			);
+
+			const result = await orderRepository.findById(1);
+
+			expect(mockPrisma.order.findUnique).toHaveBeenCalledWith({
+				where: { id: 1 },
+				include: { customer: true, orderItems: true },
+			});
+			expect(result).toEqual(mockOrders);
+		});
+
+		it('should log and throw an error if findById fails', async () => {
+			const mockError = new Error('Database connection error');
+			(mockPrisma.order.findUnique as jest.Mock).mockRejectedValue(
+				mockError,
+			);
+
+			await expect(orderRepository.findById(1)).rejects.toThrow(
+				mockError,
+			);
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in OrderRepository.findById: ',
+				mockError,
+			);
 		});
 	});
 });
