@@ -1,6 +1,5 @@
 import { Order, Prisma, PrismaClient } from '@prisma/client';
 import logger from '../configs/logger';
-import { InternalServerError } from '../errors';
 
 interface PaginatioParams {
 	offset: number;
@@ -70,7 +69,7 @@ export class OrderRepository {
 				'Error in OrderRepository.createInTransaction:',
 				error,
 			);
-			throw new InternalServerError('Failed to create order');
+			throw error;
 		}
 	}
 

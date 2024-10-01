@@ -1,5 +1,5 @@
 import { OrderRepository } from '../../src/repositories/order-repository';
-import { PrismaClient } from '@prisma/client';
+import { Order, Prisma, PrismaClient } from '@prisma/client';
 import logger from '../../src/configs/logger';
 
 jest.mock('@prisma/client');
@@ -7,6 +7,7 @@ jest.mock('../../src/configs/logger');
 
 describe('OrderRepository', () => {
 	let mockPrisma: PrismaClient;
+	let mockTx: Prisma.TransactionClient;
 	let orderRepository: OrderRepository;
 
 	beforeEach(() => {
@@ -16,6 +17,12 @@ describe('OrderRepository', () => {
 				count: jest.fn(),
 			},
 		} as unknown as PrismaClient;
+
+		mockTx = {
+			order: {
+				create: jest.fn(),
+			},
+		} as unknown as Prisma.TransactionClient;
 
 		orderRepository = new OrderRepository(mockPrisma);
 	});
@@ -87,7 +94,7 @@ describe('OrderRepository', () => {
 			const mockError = new Error('Database connection error');
 			const paginationParams = {
 				offset: 0,
-				limit: 2,
+				limit: 10,
 				filters: {},
 			};
 
@@ -133,6 +140,78 @@ describe('OrderRepository', () => {
 				'Error in OrderRepository.getAllOrders:',
 				mockError,
 			);
+		});
+	});
+
+	describe('createInTransaction', () => {
+		it('should create a order', async () => {
+			const customerId = 1;
+			const totalOrderPrice = 25000;
+			const orderItemsData: Prisma.OrderItemCreateWithoutOrderInput[] = [
+				{ product: { connect: { id: 1 } }, quantity: 2, price: 75 },
+			];
+
+			const mockOrder: Order = {
+				id: 1,
+				totalOrderPrice,
+				customerId: customerId,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+
+			(mockTx.order.create as jest.Mock).mockResolvedValue(mockOrder);
+
+			const result = await orderRepository.createInTransaction(
+				mockTx,
+				customerId,
+				totalOrderPrice,
+				orderItemsData,
+			);
+
+			expect(mockTx.order.create).toHaveBeenCalledWith({
+				data: {
+					customer: { connect: { id: customerId } },
+					totalOrderPrice,
+					orderItems: {
+						create: orderItemsData,
+					},
+				},
+			});
+			expect(result).toEqual(mockOrder);
+		});
+
+		it('should throw an error when the order creation fails', async () => {
+			const customerId = 1;
+			const totalOrderPrice = 150;
+			const orderItemsData: Prisma.OrderItemCreateWithoutOrderInput[] = [
+				{ product: { connect: { id: 1 } }, quantity: 2, price: 75 },
+			];
+
+			const mockError = new Error('Database error');
+			(mockTx.order.create as jest.Mock).mockRejectedValue(mockError);
+
+			await expect(
+				orderRepository.createInTransaction(
+					mockTx,
+					customerId,
+					totalOrderPrice,
+					orderItemsData,
+				),
+			).rejects.toThrow(mockError);
+
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in OrderRepository.createInTransaction:',
+				mockError,
+			);
+			expect(mockTx.order.create).toHaveBeenCalledWith({
+				data: {
+					customer: { connect: { id: customerId } },
+					totalOrderPrice,
+					orderItems: {
+						create: orderItemsData,
+					},
+				},
+			});
 		});
 	});
 });
