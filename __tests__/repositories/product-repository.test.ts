@@ -18,6 +18,7 @@ describe('ProductRepository', () => {
 				findUnique: jest.fn(),
 				create: jest.fn(),
 				update: jest.fn(),
+				delete: jest.fn(),
 			},
 		} as unknown as PrismaClient;
 
@@ -208,6 +209,45 @@ describe('ProductRepository', () => {
 
 		expect(logger.error).toHaveBeenCalledWith(
 			'Error in ProductRepository.updateOne: ',
+			mockError,
+		);
+	});
+
+	it('should delete a product successfully', async () => {
+		const productId = 1;
+		const mockDeletedProduct: Product = {
+			id: productId,
+			name: 'Deleted Product',
+			price: 100,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		(mockPrisma.product.delete as jest.Mock).mockResolvedValue(
+			mockDeletedProduct,
+		);
+
+		const result = await productRepository.deleteOne(productId);
+
+		expect(mockPrisma.product.delete).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.product.delete).toHaveBeenCalledWith({
+			where: { id: productId },
+		});
+		expect(result).toEqual(mockDeletedProduct);
+	});
+
+	it('should log and throw an error if delete fails', async () => {
+		const productId = 1;
+		const mockError = new Error('Database delete error');
+
+		(mockPrisma.product.delete as jest.Mock).mockRejectedValue(mockError);
+
+		await expect(productRepository.deleteOne(productId)).rejects.toThrow(
+			mockError,
+		);
+
+		expect(logger.error).toHaveBeenCalledWith(
+			'Error in ProductRepository.deleteOne: ',
 			mockError,
 		);
 	});
