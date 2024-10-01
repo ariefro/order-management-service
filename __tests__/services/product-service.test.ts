@@ -24,6 +24,14 @@ describe('ProductService', () => {
 		jest.clearAllMocks();
 	});
 
+	const mockProduct: Product = {
+		id: 1,
+		name: 'Product A',
+		price: 1000,
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	};
+
 	describe('getAllProducts', () => {
 		it('should return a list of products successfully', async () => {
 			const mockProducts: Product[] = [
@@ -69,13 +77,6 @@ describe('ProductService', () => {
 
 	describe('getProductById', () => {
 		it('should return a product if found', async () => {
-			const mockProduct: Product = {
-				id: 1,
-				name: 'Product A',
-				price: 1000,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
 			productRepository.findById.mockResolvedValue(mockProduct);
 
 			const result = await productService.getProductById(1);
@@ -111,6 +112,39 @@ describe('ProductService', () => {
 
 			expect(productRepository.findById).toHaveBeenCalledWith(1);
 			expect(productRepository.findById).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('createProduct', () => {
+		it('should create a product successfully', async () => {
+			productRepository.createOne.mockResolvedValue(mockProduct);
+
+			const result = await productService.createProduct(
+				'Product A',
+				1000,
+			);
+
+			expect(result).toEqual(mockProduct);
+			expect(productRepository.createOne).toHaveBeenCalledWith(
+				'Product A',
+				1000,
+			);
+			expect(productRepository.createOne).toHaveBeenCalledTimes(1);
+		});
+
+		it('should log and rethrow an error if product creation fails', async () => {
+			const errorMessage = 'An unexpected error occurred';
+			productRepository.createOne.mockRejectedValue(
+				new Error(errorMessage),
+			);
+
+			await expect(
+				productService.createProduct('Product A', 1000),
+			).rejects.toThrow(errorMessage);
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in ProductService.createProduct: ',
+				expect.any(Error),
+			);
 		});
 	});
 });
