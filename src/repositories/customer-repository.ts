@@ -1,6 +1,5 @@
 import { Prisma } from '@prisma/client';
 import logger from '../configs/logger';
-import { InternalServerError } from '../errors';
 
 export class CustomerRepository {
 	public async findOrCreateByNameInTransaction(
@@ -24,7 +23,7 @@ export class CustomerRepository {
 				'Error in CustomerRepository.findOrCreateCustomerByNameInTransaction: ',
 				error,
 			);
-			throw new InternalServerError('Failed to find or create customer');
+			throw error;
 		}
 	}
 }
