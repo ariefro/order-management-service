@@ -147,4 +147,99 @@ describe('ProductService', () => {
 			);
 		});
 	});
+
+	describe('updateProduct', () => {
+		it('should update a product successfully if it exists', async () => {
+			const mockProduct: Product = {
+				id: 1,
+				name: 'Updated Product',
+				price: 2000,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			productRepository.findById.mockResolvedValue(mockProduct);
+			productRepository.updateOne.mockResolvedValue(mockProduct);
+
+			const result = await productService.updateProduct(
+				1,
+				'Updated Product',
+				2000,
+			);
+
+			expect(result).toEqual(mockProduct);
+			expect(productRepository.findById).toHaveBeenCalledWith(1);
+			expect(productRepository.updateOne).toHaveBeenCalledWith(
+				1,
+				'Updated Product',
+				2000,
+			);
+			expect(productRepository.updateOne).toHaveBeenCalledTimes(1);
+		});
+
+		it('should throw NotFoundError if the product does not exist', async () => {
+			productRepository.findById.mockResolvedValue(null);
+
+			await expect(
+				productService.updateProduct(1, 'Product B', 2000),
+			).rejects.toThrow(`Product with ID 1 not found`);
+			expect(productRepository.findById).toHaveBeenCalledWith(1);
+			expect(productRepository.updateOne).not.toHaveBeenCalled();
+		});
+
+		it('should log and rethrow an error if product update fails', async () => {
+			const errorMessage = 'An unexpected error occurred';
+			productRepository.findById.mockResolvedValue(mockProduct);
+			productRepository.updateOne.mockRejectedValue(
+				new Error(errorMessage),
+			);
+
+			await expect(
+				productService.updateProduct(1, 'Updated Product', 2000),
+			).rejects.toThrow(errorMessage);
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in ProductService.updateProduct: ',
+				expect.any(Error),
+			);
+		});
+	});
+
+	describe('deleteProduct', () => {
+		it('should delete a product successfully if it exists', async () => {
+			productRepository.findById.mockResolvedValue(mockProduct);
+			productRepository.deleteOne.mockResolvedValue(mockProduct);
+
+			const result = await productService.deleteProduct(1);
+
+			expect(result).toEqual(mockProduct);
+			expect(productRepository.findById).toHaveBeenCalledWith(1);
+			expect(productRepository.deleteOne).toHaveBeenCalledWith(1);
+			expect(productRepository.deleteOne).toHaveBeenCalledTimes(1);
+		});
+
+		it('should throw NotFoundError if the product does not exist', async () => {
+			productRepository.findById.mockResolvedValue(null);
+
+			await expect(productService.deleteProduct(1)).rejects.toThrow(
+				`Product with ID 1 not found`,
+			);
+			expect(productRepository.findById).toHaveBeenCalledWith(1);
+			expect(productRepository.deleteOne).not.toHaveBeenCalled();
+		});
+
+		it('should log and rethrow an error if product deletion fails', async () => {
+			const errorMessage = 'An unexpected error occurred';
+			productRepository.findById.mockResolvedValue(mockProduct);
+			productRepository.deleteOne.mockRejectedValue(
+				new Error(errorMessage),
+			);
+
+			await expect(productService.deleteProduct(1)).rejects.toThrow(
+				errorMessage,
+			);
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in ProductService.deleteProduct: ',
+				expect.any(Error),
+			);
+		});
+	});
 });
