@@ -169,86 +169,94 @@ describe('ProductRepository', () => {
 		});
 	});
 
-	it('should update a product successfully', async () => {
-		const productId = 1;
-		const updatedProductData: Product = {
-			id: productId,
-			name: 'Updated Product',
-			price: 150,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		};
+	describe('updateOne', () => {
+		it('should update a product successfully', async () => {
+			const productId = 1;
+			const updatedProductData: Product = {
+				id: productId,
+				name: 'Updated Product',
+				price: 150,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
 
-		(mockPrisma.product.update as jest.Mock).mockResolvedValue(
-			updatedProductData,
-		);
+			(mockPrisma.product.update as jest.Mock).mockResolvedValue(
+				updatedProductData,
+			);
 
-		const result = await productRepository.updateOne(
-			productId,
-			'Updated Product',
-			150,
-		);
+			const result = await productRepository.updateOne(
+				productId,
+				'Updated Product',
+				150,
+			);
 
-		expect(mockPrisma.product.update).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.product.update).toHaveBeenCalledWith({
-			where: { id: productId },
-			data: { name: 'Updated Product', price: 150 },
+			expect(mockPrisma.product.update).toHaveBeenCalledTimes(1);
+			expect(mockPrisma.product.update).toHaveBeenCalledWith({
+				where: { id: productId },
+				data: { name: 'Updated Product', price: 150 },
+			});
+			expect(result).toEqual(updatedProductData);
 		});
-		expect(result).toEqual(updatedProductData);
-	});
 
-	it('should log and throw an error if update fails', async () => {
-		const productId = 1;
-		const mockError = new Error('Database update error');
+		it('should log and throw an error if update fails', async () => {
+			const productId = 1;
+			const mockError = new Error('Database update error');
 
-		(mockPrisma.product.update as jest.Mock).mockRejectedValue(mockError);
+			(mockPrisma.product.update as jest.Mock).mockRejectedValue(
+				mockError,
+			);
 
-		await expect(
-			productRepository.updateOne(productId, 'Updated Product', 150),
-		).rejects.toThrow(mockError);
+			await expect(
+				productRepository.updateOne(productId, 'Updated Product', 150),
+			).rejects.toThrow(mockError);
 
-		expect(logger.error).toHaveBeenCalledWith(
-			'Error in ProductRepository.updateOne: ',
-			mockError,
-		);
-	});
-
-	it('should delete a product successfully', async () => {
-		const productId = 1;
-		const mockDeletedProduct: Product = {
-			id: productId,
-			name: 'Deleted Product',
-			price: 100,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		};
-
-		(mockPrisma.product.delete as jest.Mock).mockResolvedValue(
-			mockDeletedProduct,
-		);
-
-		const result = await productRepository.deleteOne(productId);
-
-		expect(mockPrisma.product.delete).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.product.delete).toHaveBeenCalledWith({
-			where: { id: productId },
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in ProductRepository.updateOne: ',
+				mockError,
+			);
 		});
-		expect(result).toEqual(mockDeletedProduct);
 	});
 
-	it('should log and throw an error if delete fails', async () => {
-		const productId = 1;
-		const mockError = new Error('Database delete error');
+	describe('deleteOne', () => {
+		it('should delete a product successfully', async () => {
+			const productId = 1;
+			const mockDeletedProduct: Product = {
+				id: productId,
+				name: 'Deleted Product',
+				price: 100,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
 
-		(mockPrisma.product.delete as jest.Mock).mockRejectedValue(mockError);
+			(mockPrisma.product.delete as jest.Mock).mockResolvedValue(
+				mockDeletedProduct,
+			);
 
-		await expect(productRepository.deleteOne(productId)).rejects.toThrow(
-			mockError,
-		);
+			const result = await productRepository.deleteOne(productId);
 
-		expect(logger.error).toHaveBeenCalledWith(
-			'Error in ProductRepository.deleteOne: ',
-			mockError,
-		);
+			expect(mockPrisma.product.delete).toHaveBeenCalledTimes(1);
+			expect(mockPrisma.product.delete).toHaveBeenCalledWith({
+				where: { id: productId },
+			});
+			expect(result).toEqual(mockDeletedProduct);
+		});
+
+		it('should log and throw an error if delete fails', async () => {
+			const productId = 1;
+			const mockError = new Error('Database delete error');
+
+			(mockPrisma.product.delete as jest.Mock).mockRejectedValue(
+				mockError,
+			);
+
+			await expect(
+				productRepository.deleteOne(productId),
+			).rejects.toThrow(mockError);
+
+			expect(logger.error).toHaveBeenCalledWith(
+				'Error in ProductRepository.deleteOne: ',
+				mockError,
+			);
+		});
 	});
 });
