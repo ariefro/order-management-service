@@ -22,6 +22,10 @@ describe('OrderService', () => {
 	let mockProductRepository: jest.Mocked<ProductRepository>;
 
 	beforeEach(() => {
+		mockPrisma = {
+			$transaction: jest.fn(),
+		} as unknown as jest.Mocked<PrismaClient>;
+
 		mockOrderRepository = new OrderRepository(
 			mockPrisma,
 		) as jest.Mocked<OrderRepository>;
@@ -46,8 +50,32 @@ describe('OrderService', () => {
 		jest.clearAllMocks();
 	});
 
+	const orderId = 1;
+	const mockOrderItems = [
+		{
+			id: 1,
+			orderId,
+			productId: 1,
+			quantity: 2,
+			price: 54000,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		},
+	];
+	const mockValidatedOrderItems = [
+		{
+			id: 1,
+			orderId,
+			productId: 1,
+			quantity: 2,
+			price: 54000,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		},
+	];
+
 	const mockOrder = {
-		id: 1,
+		id: orderId,
 		totalOrderPrice: 108000,
 		createdAt: new Date(),
 		updatedAt: new Date(),
@@ -261,6 +289,84 @@ describe('OrderService', () => {
 				'Error in OrderService.getOrderById: ',
 				error,
 			);
+		});
+	});
+
+	describe('createOrder', () => {
+		it('should throw an error if selected product not found', async () => {
+			const customerName = 'John Doe';
+			const errorMessage = 'One or more products not found';
+
+			mockPrisma.$transaction.mockRejectedValue(new Error(errorMessage));
+
+			await expect(
+				orderService.createOrder(customerName, mockOrderItems),
+			).rejects.toThrow(errorMessage);
+			// expect(mockPrisma.$transaction).toHaveBeenCalled();
+		});
+	});
+
+	describe('editOrder', () => {
+		it('should update the order if it exists', async () => {
+			const mockTotalPrice = 54000;
+
+			// Mock the private methods
+			jest.spyOn(
+				orderService as any,
+				'validateOrderItems',
+			).mockResolvedValue(mockValidatedOrderItems);
+			jest.spyOn(
+				orderService as any,
+				'calculateTotalOrderPrice',
+			).mockReturnValue(mockTotalPrice);
+
+			mockOrderRepository.findById.mockResolvedValue(mockOrder);
+
+			mockOrderRepository.updateById.mockResolvedValue(mockOrder);
+
+			const result = await orderService.editOrderById(
+				orderId,
+				mockOrderItems,
+			);
+
+			expect(result).toEqual(mockOrder);
+			expect(mockOrderRepository.findById).toHaveBeenCalledWith(orderId);
+			expect(orderService['validateOrderItems']).toHaveBeenCalledWith(
+				mockOrderItems,
+			);
+			expect(
+				orderService['calculateTotalOrderPrice'],
+			).toHaveBeenCalledWith(mockValidatedOrderItems);
+			expect(mockOrderRepository.updateById).toHaveBeenCalledWith(
+				orderId,
+				mockValidatedOrderItems,
+				mockTotalPrice,
+			);
+		});
+
+		it('should throw NotFoundError if order does not exist', async () => {
+			const orderId = 1;
+
+			jest.spyOn(
+				orderService as any,
+				'validateOrderItems',
+			).mockResolvedValue(null);
+			jest.spyOn(
+				orderService as any,
+				'calculateTotalOrderPrice',
+			).mockReturnValue(null);
+
+			mockOrderRepository.findById.mockResolvedValue(null);
+
+			await expect(
+				orderService.editOrderById(orderId, mockOrderItems),
+			).rejects.toThrow(NotFoundError);
+
+			expect(mockOrderRepository.findById).toHaveBeenCalledWith(orderId);
+			expect(orderService['validateOrderItems']).not.toHaveBeenCalled();
+			expect(
+				orderService['calculateTotalOrderPrice'],
+			).not.toHaveBeenCalled();
 		});
 	});
 });
