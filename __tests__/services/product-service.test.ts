@@ -9,7 +9,7 @@ jest.mock('../../src/repositories/product-repository');
 jest.mock('../../src/configs/logger');
 
 describe('ProductService', () => {
-	let mockPrisma: PrismaClient;
+	let mockPrisma: jest.Mocked<PrismaClient>;
 	let productService: ProductService;
 	let productRepository: jest.Mocked<ProductRepository>;
 
