@@ -107,6 +107,9 @@ export class ProductController {
 	): Promise<void> {
 		try {
 			const id = parseInt(req.params.id, 10);
+			if (isNaN(id) || id <= 0) {
+				throw new ValidationError('Invalid product ID');
+			}
 
 			await this.productService.deleteProduct(id);
 

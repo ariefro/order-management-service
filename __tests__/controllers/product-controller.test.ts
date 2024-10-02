@@ -252,11 +252,12 @@ describe('ProductController', () => {
 			);
 
 			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(productService.updateProduct).not.toHaveBeenCalled();
 		});
 
 		it('should throw a ValidationError if name or price is invalid', async () => {
 			mockReq.params = { id: '1' };
-			mockReq.body = { name: '', price: 'invalidPrice' };
+			mockReq.body = { name: 'Updated Product', price: '-10000' };
 			const mockError = new Error('Invalid request parameter');
 
 			await productController.updateProduct(
@@ -299,6 +300,54 @@ describe('ProductController', () => {
 			productService.updateProduct.mockRejectedValue(mockError);
 
 			await productController.updateProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+		});
+	});
+
+	describe('deleteProduct', () => {
+		it('should call ProductService.deleteProduct and return success response', async () => {
+			mockReq.params = { id: '1' };
+
+			await productController.deleteProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(productService.deleteProduct).toHaveBeenCalledWith(1);
+
+			expect(successResponse).toHaveBeenCalledWith(
+				mockRes,
+				undefined,
+				'Product deleted successfully',
+			);
+		});
+
+		it('should handle invalid product ID and call next with an error', async () => {
+			mockReq.params = { id: 'invalid' };
+			const mockError = new Error('Invalid product ID');
+
+			await productController.deleteProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(productService.deleteProduct).not.toHaveBeenCalled();
+		});
+
+		it('should call next with an error if ProductService.deleteProduct throws an error', async () => {
+			mockReq.params = { id: '1' };
+			const mockError = new Error('An unexpected error occurred');
+			productService.deleteProduct.mockRejectedValueOnce(mockError);
+
+			await productController.deleteProduct(
 				mockReq as Request,
 				mockRes as Response,
 				mockNext,
