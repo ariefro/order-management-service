@@ -239,4 +239,72 @@ describe('ProductController', () => {
 			expect(mockNext).toHaveBeenCalledWith(mockError);
 		});
 	});
+
+	describe('updateProduct', () => {
+		it('should throw a ValidationError if product ID is invalid', async () => {
+			mockReq.params = { id: 'invalid' };
+			const mockError = new Error('Invalid product ID');
+
+			await productController.updateProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+		});
+
+		it('should throw a ValidationError if name or price is invalid', async () => {
+			mockReq.params = { id: '1' };
+			mockReq.body = { name: '', price: 'invalidPrice' };
+			const mockError = new Error('Invalid request parameter');
+
+			await productController.updateProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+		});
+
+		it('should call ProductService.updateProduct and return the updated product', async () => {
+			mockReq.params = { id: '1' };
+			mockReq.body = { name: 'Updated Product', price: '20000' };
+			productService.updateProduct.mockResolvedValue(mockProduct);
+
+			await productController.updateProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(productService.updateProduct).toHaveBeenCalledWith(
+				1,
+				'Updated Product',
+				20000,
+			);
+
+			expect(successResponse).toHaveBeenCalledWith(
+				mockRes,
+				{ product: mockProduct },
+				'Product updated successfully',
+			);
+		});
+
+		it('should call next with error if an exception occurs in ProductService', async () => {
+			mockReq.params = { id: '1' };
+			mockReq.body = { name: 'Updated Product', price: '20000' };
+			const mockError = new Error('An unexpected error occurred');
+			productService.updateProduct.mockRejectedValue(mockError);
+
+			await productController.updateProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+		});
+	});
 });
