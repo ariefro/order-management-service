@@ -38,6 +38,10 @@ describe('ProductController', () => {
 		mockNext = jest.fn();
 	});
 
+	afterEach(() => {
+		jest.clearAllMocks();
+	});
+
 	const mockProduct: Product = {
 		id: 1,
 		name: 'Product 1',

@@ -127,7 +127,7 @@ describe('OrderService', () => {
 					orderId: 1,
 					productId: 1,
 					quantity: 2,
-					price: 50,
+					price: 5000,
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				},
@@ -151,7 +151,7 @@ describe('OrderService', () => {
 					orderId: 2,
 					productId: 2,
 					quantity: 1,
-					price: 200,
+					price: 10000,
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				},
@@ -176,8 +176,8 @@ describe('OrderService', () => {
 			const result = await orderService.getAllOrders(mockParams);
 
 			expect(result.orders).toHaveLength(2);
-			expect(result.orders[0]).toHaveProperty('totalProducts', 1);
-			expect(result.orders[1]).toHaveProperty('totalProducts', 1);
+			expect(result.orders[0]).toHaveProperty('totalItems', 1);
+			expect(result.orders[1]).toHaveProperty('totalItems', 1);
 			expect(result.totalItems).toBe(2);
 
 			expect(

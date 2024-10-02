@@ -27,9 +27,7 @@ const orderService = new OrderService(
 
 const orderController = new OrderController(orderService);
 
-router.get('/', (req, res, next) =>
-	orderController.getAllOrders(req, res, next),
-);
+router.get('/', (req, res, next) => orderController.getOrders(req, res, next));
 router.post('/', (req, res, next) =>
 	orderController.createOrder(req, res, next),
 );

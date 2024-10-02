@@ -16,7 +16,7 @@ export class OrderController {
 		this.orderService = orderService;
 	}
 
-	public async getAllOrders(
+	public async getOrders(
 		req: Request,
 		res: Response,
 		next: NextFunction,
