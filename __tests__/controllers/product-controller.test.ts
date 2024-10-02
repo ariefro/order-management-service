@@ -4,6 +4,7 @@ import { ProductService } from '../../src/services/product-service';
 import { successResponse } from '../../src/utils/success-response';
 import { ProductRepository } from '../../src/repositories';
 import { PrismaClient, Product } from '@prisma/client';
+import { NotFoundError, ValidationError } from '../../src/errors';
 
 jest.mock('@prisma/client');
 jest.mock('../../src/services/product-service');
@@ -29,10 +30,20 @@ describe('ProductController', () => {
 		productController = new ProductController(productService);
 
 		// Mock req, res, next
-		mockReq = {};
+		mockReq = {
+			params: {},
+		};
 		mockRes = {};
 		mockNext = jest.fn();
 	});
+
+	const mockProduct: Product = {
+		id: 1,
+		name: 'Product 1',
+		price: 100,
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	};
 
 	const mockProducts: Product[] = [
 		{
@@ -75,6 +86,80 @@ describe('ProductController', () => {
 			productService.getAllProducts.mockRejectedValue(mockError);
 
 			await productController.getAllProducts(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+		});
+	});
+
+	describe('getProductById', () => {
+		it('should throw a ValidationError if the product ID is invalid', async () => {
+			mockReq.params!.id = 'abc'; // Non-numeric value
+
+			await productController.getProductById(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(expect.any(ValidationError));
+		});
+
+		it('should throw a ValidationError if the product ID is less than or equal to 0', async () => {
+			mockReq.params!.id = '-1';
+
+			await productController.getProductById(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(expect.any(ValidationError));
+		});
+
+		it('should call ProductService.getProductById and return product data if valid ID is passed', async () => {
+			mockReq.params!.id = '1';
+			productService.getProductById.mockResolvedValue(mockProduct);
+
+			await productController.getProductById(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			// Assert: Ensure ProductService.getProductById was called with correct ID
+			expect(productService.getProductById).toHaveBeenCalledWith(1);
+
+			expect(successResponse).toHaveBeenCalledWith(
+				mockRes,
+				{ product: mockProduct },
+				'Product fetched successfully',
+			);
+		});
+
+		it('should call next with error if product is not found', async () => {
+			mockReq.params!.id = '1';
+			const notFoundError = new NotFoundError('Product not found');
+			productService.getProductById.mockRejectedValue(notFoundError);
+
+			await productController.getProductById(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(notFoundError);
+		});
+
+		it('should call next with any unexpected error', async () => {
+			mockReq.params!.id = '1';
+			const mockError = new Error('An unexpected error occurred');
+			productService.getProductById.mockRejectedValue(mockError);
+
+			await productController.getProductById(
 				mockReq as Request,
 				mockRes as Response,
 				mockNext,
