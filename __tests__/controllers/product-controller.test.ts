@@ -5,6 +5,7 @@ import { successResponse } from '../../src/utils/success-response';
 import { ProductRepository } from '../../src/repositories';
 import { PrismaClient, Product } from '@prisma/client';
 import { NotFoundError, ValidationError } from '../../src/errors';
+import { statusCreated } from '../../src/constants/http-status-code';
 
 jest.mock('@prisma/client');
 jest.mock('../../src/services/product-service');
@@ -160,6 +161,76 @@ describe('ProductController', () => {
 			productService.getProductById.mockRejectedValue(mockError);
 
 			await productController.getProductById(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+		});
+	});
+
+	describe('createProduct', () => {
+		it('should throw a ValidationError if name or price is invalid', async () => {
+			mockReq.body = { name: 'abc', price: '-1000' };
+			const invalidRequestParameter = new ValidationError(
+				'Invalid request parameter',
+			);
+
+			await productController.createProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(invalidRequestParameter);
+		});
+
+		it('should throw a ValidationError if name or price is empty', async () => {
+			mockReq.body = { name: '', price: '-1000' };
+			const invalidRequestParameter = new ValidationError(
+				'Please fill all of mandatory field',
+			);
+
+			await productController.createProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(invalidRequestParameter);
+		});
+
+		it('should call ProductService.createProduct and return the newly created product', async () => {
+			mockReq.body = { name: 'Product A', price: '1000' }; // Simulate valid input
+			productService.createProduct.mockResolvedValue(mockProduct);
+
+			await productController.createProduct(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(productService.createProduct).toHaveBeenCalledWith(
+				'Product A',
+				1000,
+			);
+
+			expect(successResponse).toHaveBeenCalledWith(
+				mockRes,
+				{ product: mockProduct },
+				'Product created successfully',
+				undefined,
+				statusCreated,
+			);
+		});
+
+		it('should call next with error if an exception occurs in ProductService', async () => {
+			mockReq.body = { name: 'Product A', price: '1000' };
+			const mockError = new Error('An unexpected error occurred');
+			productService.createProduct.mockRejectedValue(mockError);
+
+			await productController.createProduct(
 				mockReq as Request,
 				mockRes as Response,
 				mockNext,
