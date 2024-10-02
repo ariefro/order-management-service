@@ -369,4 +369,53 @@ describe('OrderService', () => {
 			).not.toHaveBeenCalled();
 		});
 	});
+
+	describe('deleteOrder', () => {
+		it('should delete order and order items if order exists', async () => {
+			const orderId = 1;
+
+			// Simulate order found
+			mockOrderRepository.findById.mockResolvedValue(mockOrder);
+
+			// Mock the transaction
+			mockPrisma.$transaction.mockImplementation(async (callback) => {
+				return await callback(mockPrisma);
+			});
+
+			// Simulate successful deletion
+			mockOrderItemRepository.deleteManyByOrderIdInTransaction.mockResolvedValue(
+				{
+					count: 1, // Assuming 1 item is deleted
+				},
+			);
+			mockOrderRepository.deleteByIdInTransaction.mockResolvedValue(
+				mockOrder,
+			);
+
+			const result = await orderService.deleteOrderById(orderId);
+
+			expect(result).toBe(true);
+			expect(mockOrderRepository.findById).toHaveBeenCalledWith(orderId);
+			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+			expect(
+				mockOrderItemRepository.deleteManyByOrderIdInTransaction,
+			).toHaveBeenCalledWith(mockPrisma, orderId);
+			expect(
+				mockOrderRepository.deleteByIdInTransaction,
+			).toHaveBeenCalledWith(mockPrisma, orderId);
+		});
+
+		it('should throw NotFoundError if order does not exist', async () => {
+			const orderId = 1;
+
+			mockOrderRepository.findById.mockResolvedValue(null);
+
+			await expect(orderService.deleteOrderById(orderId)).rejects.toThrow(
+				NotFoundError,
+			);
+
+			expect(mockOrderRepository.findById).toHaveBeenCalledWith(orderId);
+			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		});
+	});
 });
