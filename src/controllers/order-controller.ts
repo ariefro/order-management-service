@@ -148,15 +148,11 @@ export class OrderController {
 		}
 
 		for (const item of orderItems) {
-			if (!item.productId) {
-				throw new ValidationError('Please fill all of mandatory field');
-			}
-
 			if (isNaN(item.productId)) {
 				throw new ValidationError('Invalid product ID');
 			}
 
-			if (!item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
+			if (isNaN(item.quantity) || item.quantity <= 0) {
 				throw new ValidationError(
 					'Quantity is required and must be greater than 0',
 				);

@@ -9,6 +9,7 @@ import {
 	OrderRepository,
 	ProductRepository,
 } from '../../src/repositories';
+import { statusCreated } from '../../src/constants/http-status-code';
 
 jest.mock('../../src/services/order-service');
 jest.mock('../../src/utils/success-response');
@@ -161,6 +162,122 @@ describe('OrderController', () => {
 			);
 
 			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(successResponse).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('createOrder', () => {
+		it('should successfully create an order and send response', async () => {
+			mockReq.body = {
+				customerName: 'John Doe',
+				orderItems: [{ productId: 1, quantity: 2 }],
+			};
+
+			const mockOrder = {
+				id: 1,
+				customerName: 'John Doe',
+				totalPrice: 1000,
+			};
+			orderService.createOrder.mockResolvedValueOnce(mockOrder as any);
+
+			await orderController.createOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(orderService.createOrder).toHaveBeenCalledWith('John Doe', [
+				{ productId: 1, quantity: 2 },
+			]);
+			expect(successResponse).toHaveBeenCalledWith(
+				mockRes,
+				{ order: mockOrder },
+				'Order created successfully',
+				undefined,
+				statusCreated,
+			);
+			expect(mockNext).not.toHaveBeenCalled();
+		});
+
+		it('should throw a validation error if order are invalid', async () => {
+			mockReq.body = {
+				customerName: 'John Doe',
+				orderItems: [],
+			};
+			const mockError = new Error('Order must have at least one product');
+			orderService.createOrder.mockRejectedValueOnce(mockError);
+
+			await orderController.createOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(orderService.createOrder).not.toHaveBeenCalled();
+		});
+
+		it('should throw a validation error if customer name are invalid', async () => {
+			mockReq.body = {
+				customerName: '',
+				orderItems: [{ productId: 1, quantity: 1 }],
+			};
+			const mockError = new Error('Customer name is required');
+			orderService.createOrder.mockRejectedValueOnce(mockError);
+
+			await orderController.createOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(orderService.createOrder).not.toHaveBeenCalled();
+		});
+
+		it('should call mockNext with error if order items invalid', async () => {
+			mockReq.body = {
+				customerName: 'John Doe',
+				orderItems: [{ productId: 1, quantity: 0 }],
+			};
+
+			const mockError = new Error(
+				'Quantity is required and must be greater than 0',
+			);
+			orderService.createOrder.mockRejectedValueOnce(mockError);
+
+			await orderController.createOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(orderService.createOrder).not.toHaveBeenCalledWith(
+				mockError,
+			);
+			expect(successResponse).not.toHaveBeenCalled();
+		});
+
+		it('should call mockNext with error if order items with invalid product', async () => {
+			mockReq.body = {
+				customerName: 'John Doe',
+				orderItems: [{ quantity: 1 }],
+			};
+
+			const mockError = new Error('Invalid product ID');
+			orderService.createOrder.mockRejectedValueOnce(mockError);
+
+			await orderController.createOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(orderService.createOrder).not.toHaveBeenCalledWith(
+				mockError,
+			);
 			expect(successResponse).not.toHaveBeenCalled();
 		});
 	});
