@@ -426,4 +426,58 @@ describe('OrderController', () => {
 			expect(successResponse).not.toHaveBeenCalled();
 		});
 	});
+
+	describe('deleteOrder', () => {
+		it('should successfully delete the order and send response', async () => {
+			mockReq.params = { id: '1' };
+
+			orderService.deleteOrderById.mockResolvedValueOnce(true);
+
+			await orderController.deleteOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(orderService.deleteOrderById).toHaveBeenCalledWith(1);
+			expect(successResponse).toHaveBeenCalledWith(
+				mockRes,
+				undefined,
+				'Successfully deleted order',
+			);
+			expect(mockNext).not.toHaveBeenCalled();
+		});
+
+		it('should throw a validation error if order ID is invalid', async () => {
+			mockReq.params = { id: 'abc' };
+			const mockError = new Error('Invalid order ID');
+
+			await orderController.deleteOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(orderService.deleteOrderById).not.toHaveBeenCalled();
+			expect(successResponse).not.toHaveBeenCalled();
+		});
+
+		it('should call mockNext with error if orderService.deleteOrderById throws an error', async () => {
+			mockReq.params = { id: '1' };
+
+			const mockError = new Error('An unexpected error occured');
+			orderService.deleteOrderById.mockRejectedValueOnce(mockError);
+
+			await orderController.deleteOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(orderService.deleteOrderById).toHaveBeenCalledWith(1);
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(successResponse).not.toHaveBeenCalled();
+		});
+	});
 });
