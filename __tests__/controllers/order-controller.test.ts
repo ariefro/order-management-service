@@ -151,7 +151,7 @@ describe('OrderController', () => {
 			);
 		});
 
-		it('should call next with an error if OrderService.getAllOrders throws an error', async () => {
+		it('should call mockNext with an error if OrderService.getAllOrders throws an error', async () => {
 			const mockError = new Error('An unexpected error occurred');
 			orderService.getAllOrders.mockRejectedValueOnce(mockError);
 
@@ -278,6 +278,64 @@ describe('OrderController', () => {
 			expect(orderService.createOrder).not.toHaveBeenCalledWith(
 				mockError,
 			);
+			expect(successResponse).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('getOrderDetail', () => {
+		it('should successfully fetch the order detail and send response', async () => {
+			mockReq.params = { id: '1' };
+
+			const mockOrder = {
+				id: 1,
+				customerName: 'John Doe',
+				totalPrice: 10000,
+			};
+			orderService.getOrderById.mockResolvedValueOnce(mockOrder as any);
+
+			await orderController.getOrderDetail(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(orderService.getOrderById).toHaveBeenCalledWith(1);
+			expect(successResponse).toHaveBeenCalledWith(
+				mockRes,
+				{ order: mockOrder },
+				'Order fetched successfully',
+			);
+			expect(mockNext).not.toHaveBeenCalled();
+		});
+
+		it('should throw a validation error if order ID is invalid', async () => {
+			mockReq.params = { id: '0' };
+			const mockError = new Error('Invalid order ID');
+
+			await orderController.getOrderDetail(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(orderService.getOrderById).not.toHaveBeenCalled();
+		});
+
+		it('should call mockNext with error if orderService.getOrderById throws an error', async () => {
+			mockReq.params = { id: '1' };
+
+			const mockError = new Error('Order not found');
+			orderService.getOrderById.mockRejectedValueOnce(mockError);
+
+			await orderController.getOrderDetail(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(orderService.getOrderById).toHaveBeenCalledWith(1);
+			expect(mockNext).toHaveBeenCalledWith(mockError);
 			expect(successResponse).not.toHaveBeenCalled();
 		});
 	});
