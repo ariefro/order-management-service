@@ -10,6 +10,7 @@ import {
 	ProductRepository,
 } from '../../src/repositories';
 import { statusCreated } from '../../src/constants/http-status-code';
+import { ValidationError } from '../../src/errors';
 
 jest.mock('../../src/services/order-service');
 jest.mock('../../src/utils/success-response');
@@ -335,6 +336,92 @@ describe('OrderController', () => {
 			);
 
 			expect(orderService.getOrderById).toHaveBeenCalledWith(1);
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(successResponse).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('OrderController - editOrder', () => {
+		it('should successfully edit the order and send response', async () => {
+			mockReq.params = { id: '1' };
+			mockReq.body = { orderItems: [{ productId: 1, quantity: 2 }] };
+
+			const mockOrder = {
+				id: 1,
+				orderItems: [{ productId: 1, quantity: 2 }],
+			};
+			orderService.editOrderById.mockResolvedValueOnce(mockOrder as any);
+
+			await orderController.editOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(orderService.editOrderById).toHaveBeenCalledWith(
+				1,
+				mockReq.body.orderItems,
+			);
+			expect(successResponse).toHaveBeenCalledWith(
+				mockRes,
+				{ order: mockOrder },
+				'Order updated successfully',
+			);
+			expect(mockNext).not.toHaveBeenCalled();
+		});
+
+		it('should throw a validation error if order ID is invalid', async () => {
+			mockReq.params = { id: '0' };
+			const mockError = new Error('Invalid order ID');
+
+			await orderController.editOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(mockError);
+			expect(orderService.editOrderById).not.toHaveBeenCalled();
+		});
+
+		it('should throw a validation error if orderItems is missing or invalid', async () => {
+			mockReq.params = { id: '1' };
+			mockReq.body = { orderItems: null };
+
+			jest.spyOn(
+				orderController as any,
+				'validateOrderItems',
+			).mockImplementation(() => {
+				throw new ValidationError('Invalid order items');
+			});
+
+			await orderController.editOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(mockNext).toHaveBeenCalledWith(expect.any(ValidationError));
+			expect(orderService.editOrderById).not.toHaveBeenCalled();
+		});
+
+		it('should call mockNext with error if orderService.editOrderById throws an error', async () => {
+			mockReq.params = { id: '1' };
+			mockReq.body = { orderItems: [{ productId: 1, quantity: 2 }] };
+
+			const mockError = new Error('An unexpected error occurred');
+			orderService.editOrderById.mockRejectedValueOnce(mockError);
+
+			await orderController.editOrder(
+				mockReq as Request,
+				mockRes as Response,
+				mockNext as NextFunction,
+			);
+
+			expect(orderService.editOrderById).toHaveBeenCalledWith(
+				1,
+				mockReq.body.orderItems,
+			);
 			expect(mockNext).toHaveBeenCalledWith(mockError);
 			expect(successResponse).not.toHaveBeenCalled();
 		});
