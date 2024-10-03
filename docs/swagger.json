@@ -520,7 +520,7 @@
                                   }
                                 }
                               },
-                              "totalProducts": {
+                              "totalItems": {
                                 "type": "integer",
                                 "example": 1
                               }
